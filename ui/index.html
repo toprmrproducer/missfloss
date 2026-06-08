@@ -223,6 +223,31 @@ tr.detail-row td{background:#111;font-family:var(--mono);font-size:.73rem;color:
 @keyframes sp{to{transform:rotate(360deg)}}
 
 @media(max-width:600px){nav{padding:0 .75rem}main{padding:1rem .75rem}.form-grid,.field-row{grid-template-columns:1fr}}
+
+/* ── Telnyx setup guide ── */
+.tg-steps{display:flex;flex-direction:column;gap:.85rem}
+.tg-step{display:flex;gap:1rem;background:var(--card);border:1px solid var(--border);border-radius:14px;
+  padding:1.1rem 1.25rem;box-shadow:0 1px 3px rgba(6,182,212,.05)}
+.tg-num{flex:0 0 34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(135deg,var(--accent2),var(--accent));color:#fff;font-weight:800;font-size:1rem}
+.tg-body{flex:1}
+.tg-body h4{font-size:.98rem;font-weight:700;color:var(--text);margin-bottom:.3rem}
+.tg-body p{font-size:.85rem;color:var(--text2);line-height:1.6}
+.tg-body a{color:var(--accent);font-weight:600;text-decoration:none}
+.tg-body a:hover{text-decoration:underline}
+.tg-grid{display:grid;grid-template-columns:1fr 1fr;gap:.7rem;margin:.4rem 0 .9rem}
+.tg-grid label{display:block;font-size:.72rem;font-weight:600;color:var(--text2);margin-bottom:.3rem}
+.tg-grid input{width:100%;padding:9px 11px;border:1px solid var(--border);border-radius:9px;font-size:.88rem;background:#fff;color:var(--text)}
+.tg-grid input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent2)22}
+.tg-save,.tg-activate{border:none;border-radius:10px;padding:11px 20px;cursor:pointer;font-weight:700;font-size:.88rem;
+  background:linear-gradient(135deg,var(--accent2),var(--accent));color:#fff;box-shadow:0 6px 16px rgba(6,182,212,.28)}
+.tg-save:hover,.tg-activate:hover{transform:translateY(-1px)}
+.tg-activate.ghost{background:#fff;color:var(--accent);border:1px solid var(--border);box-shadow:none;margin-left:.5rem}
+.tg-activate.ghost:hover{background:#ecfeff}
+.tg-msg{margin-top:.7rem;font-size:.82rem;min-height:1.1em}
+.tg-msg.ok{color:var(--accent)}
+.tg-msg.err{color:var(--danger)}
+@media(max-width:600px){.tg-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -251,6 +276,7 @@ tr.detail-row td{background:#111;font-family:var(--mono);font-size:.73rem;color:
   <button class="tab" data-tab="settings">⚙️ Settings</button>
   <button class="tab" data-tab="errors" id="tab-errors-btn">📋 Logs <span class="dot" id="err-dot"></span></button>
   <button class="tab" data-tab="setup">🔧 Setup</button>
+  <button class="tab" data-tab="telnyx">📞 Telnyx Setup</button>
   <button class="tab" data-tab="livelink">🔗 Live Link</button>
 </nav>
 
@@ -1113,6 +1139,86 @@ tr.detail-row td{background:#111;font-family:var(--mono);font-size:.73rem;color:
   </div>
 </div>
 
+<!-- ══ TELNYX SETUP ══ -->
+<div class="tab-panel" id="tab-telnyx">
+  <div class="sh">📞 Telnyx Telephony Setup</div>
+
+  <div class="card" style="margin-bottom:1rem">
+    <h3 style="color:var(--accent);margin-bottom:.4rem">Connect your own phone numbers</h3>
+    <p style="font-size:.86rem;color:var(--text2);line-height:1.6">
+      Telnyx gives you real phone numbers (local or toll-free, 180+ countries) from about $1/number/month,
+      so Miss Floss can place and receive calls on your clinic's own line. Follow the five steps below once.
+      It takes about 10 minutes. After that, your AI receptionist is live on a real number.
+    </p>
+  </div>
+
+  <div class="tg-steps">
+    <div class="tg-step">
+      <div class="tg-num">1</div>
+      <div class="tg-body">
+        <h4>Create a Telnyx account &amp; add a number</h4>
+        <p>Go to <a href="https://telnyx.com/sign-up" target="_blank" rel="noopener">telnyx.com/sign-up</a>, verify your email, and add a small balance ($10 is plenty to start).
+        Then open <b>Numbers → Search &amp; Buy Numbers</b>, pick a local number for your clinic's area, and buy it (about $1).</p>
+      </div>
+    </div>
+
+    <div class="tg-step">
+      <div class="tg-num">2</div>
+      <div class="tg-body">
+        <h4>Create a SIP Connection (Credentials auth)</h4>
+        <p>Go to <b>Voice → SIP Connections → Create SIP Connection</b>. Name it <code>Miss Floss</code>.
+        Under <b>Authentication</b>, choose <b>Credentials</b> and set a username and password (write these down, you need them in step 4).
+        Save.</p>
+      </div>
+    </div>
+
+    <div class="tg-step">
+      <div class="tg-num">3</div>
+      <div class="tg-body">
+        <h4>Point your number at the connection</h4>
+        <p>Open <b>Numbers → My Numbers</b>, click your number, and under <b>Voice → Connection / Application</b> select the
+        <code>Miss Floss</code> SIP Connection you just made. Save. This routes inbound calls to Miss Floss.</p>
+      </div>
+    </div>
+
+    <div class="tg-step">
+      <div class="tg-num">4</div>
+      <div class="tg-body">
+        <h4>Enter your credentials below</h4>
+        <p style="margin-bottom:.7rem">Paste the SIP Connection username/password from step 2 and your number in E.164 format (for example <code>+14165551234</code>).</p>
+        <div class="tg-grid">
+          <div><label>SIP Username</label><input id="tx-user" placeholder="missfloss_sip"></div>
+          <div><label>SIP Password</label><input id="tx-pass" type="password" placeholder="••••••••"></div>
+          <div><label>Phone Number (E.164)</label><input id="tx-num" placeholder="+14165551234"></div>
+          <div><label>SIP Domain</label><input id="tx-domain" value="sip.telnyx.com"></div>
+        </div>
+        <button class="tg-save" onclick="saveTelnyx()">Save Telnyx Credentials</button>
+        <div id="tx-save-msg" class="tg-msg"></div>
+      </div>
+    </div>
+
+    <div class="tg-step">
+      <div class="tg-num">5</div>
+      <div class="tg-body">
+        <h4>Activate the trunk</h4>
+        <p style="margin-bottom:.7rem">This connects Telnyx to Miss Floss for outbound calls. One click. You can re-run it any time you change numbers.</p>
+        <button class="tg-activate" onclick="activateTelnyx('outbound')">Activate Outbound Calling</button>
+        <button class="tg-activate ghost" onclick="activateTelnyx('inbound')">Enable Inbound (receive calls)</button>
+        <div id="tx-act-msg" class="tg-msg"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:1rem">
+    <div style="font-size:.74rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.5rem">Need help?</div>
+    <p style="font-size:.82rem;color:var(--text2);line-height:1.7">
+      Telnyx docs: <a href="https://developers.telnyx.com/docs/voice/sip-trunking" target="_blank" rel="noopener">SIP Trunking guide</a>.
+      Once activated, place a test call from the <b>Single Call</b> tab. If a call does not connect, double-check the number is in E.164 format
+      and the SIP Connection username/password match exactly.
+    </p>
+  </div>
+</div>
+
 <!-- ══ LIVE LINK ══ -->
 <div class="tab-panel" id="tab-livelink">
   <div class="sh">🔗 Live Link Generator</div>
@@ -1227,6 +1333,44 @@ function switchTab(name){
 }
 
 // ══ Live Link ══
+// ══ Telnyx setup ══
+async function saveTelnyx(){
+  const msg = document.getElementById('tx-save-msg');
+  msg.className = 'tg-msg';
+  const settings = {
+    TELNYX_USERNAME: document.getElementById('tx-user').value.trim(),
+    TELNYX_PASSWORD: document.getElementById('tx-pass').value,
+    TELNYX_OUTBOUND_NUMBER: document.getElementById('tx-num').value.trim(),
+    TELNYX_SIP_DOMAIN: document.getElementById('tx-domain').value.trim() || 'sip.telnyx.com',
+  };
+  if(!settings.TELNYX_USERNAME || !settings.TELNYX_PASSWORD || !settings.TELNYX_OUTBOUND_NUMBER){
+    msg.className='tg-msg err'; msg.textContent='Fill username, password, and phone number.'; return;
+  }
+  if(!settings.TELNYX_OUTBOUND_NUMBER.startsWith('+')){
+    msg.className='tg-msg err'; msg.textContent='Phone number must be E.164, e.g. +14165551234.'; return;
+  }
+  try {
+    const r = await fetch('/api/settings', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({settings})});
+    if(!r.ok){ const e = await r.json(); throw new Error(e.detail || 'Save failed'); }
+    msg.className='tg-msg ok'; msg.textContent='✓ Credentials saved. Now click "Activate Outbound Calling" in step 5.';
+  } catch(e){ msg.className='tg-msg err'; msg.textContent='Error: '+e.message; }
+}
+
+async function activateTelnyx(mode){
+  const msg = document.getElementById('tx-act-msg');
+  msg.className='tg-msg'; msg.textContent='Activating...';
+  const url = mode === 'inbound' ? '/api/setup/trunk/telnyx/inbound' : '/api/setup/trunk/telnyx';
+  try {
+    const r = await fetch(url, {method:'POST'});
+    const d = await r.json();
+    if(!r.ok){ throw new Error(d.detail || 'Activation failed'); }
+    msg.className='tg-msg ok';
+    msg.textContent = mode === 'inbound'
+      ? `✓ Inbound enabled. Trunk ${d.trunk_id}. Calls to your number now reach Miss Floss.`
+      : `✓ Outbound active. Trunk ${d.trunk_id}. You can place calls from your Telnyx number now.`;
+  } catch(e){ msg.className='tg-msg err'; msg.textContent='Error: '+e.message; }
+}
+
 async function loadLiveLink(){
   const inp = document.getElementById('llink-input');
   const status = document.getElementById('llink-status');
