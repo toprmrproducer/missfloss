@@ -3,6 +3,9 @@
 AI voice agent + dashboard for dental clinics (missfloss.ai). Rebranded fork of the
 RapidX outbound caller (Dogra-style) system, for Anmol Anand & Rutvik.
 
+> **Deploying? Read `DEPLOY_MISSFLOSS.md`** — full plain-English guide: local on a
+> computer, on a VPS (Docker / Coolify / Nginx+HTTPS), and Telnyx number setup.
+
 ## Stack
 - **Backend**: FastAPI (`server.py`) + LiveKit agent worker (`agent.py`), Gemini Live (single-node STT+LLM+TTS, low latency).
 - **Telephony**: Vobiz (dev) or **Telnyx** (clinic / international, $1/number). Switch via `ACTIVE_TELEPHONY_PROVIDER` + `POST /api/setup/trunk/telnyx`.
