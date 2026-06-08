@@ -1,0 +1,16 @@
+.env
+.public-url
+__pycache__/
+*.py[cod]
+venv/
+env/
+.venv/
+*.db
+*.db-shm
+*.db-wal
+*.log
+.DS_Store
+.idea/
+.vscode/
+node_modules.nosync/
+.playwright-mcp/

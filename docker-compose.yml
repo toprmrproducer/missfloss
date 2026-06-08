@@ -1,0 +1,63 @@
+version: "3.9"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Outbound AI Caller — Docker Compose
+#
+# Two services share a single image:
+#   agent   → python agent.py start  (AI worker, connects to LiveKit + Gemini)
+#   server  → uvicorn server:app     (dashboard + REST API on port 8000)
+#
+# Both read from .env and share the /data volume for the SQLite database.
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+
+  # ── AI Agent Worker ────────────────────────────────────────────────────────
+  agent:
+    build: .
+    image: outbound-caller:latest
+    container_name: outbound-agent
+    command: python agent.py start
+    env_file: .env
+    environment:
+      - DB_PATH=/data/appointments.db
+    volumes:
+      - caller-data:/data
+    restart: unless-stopped
+    depends_on:
+      - server           # start server first so DB is initialised
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ── Dashboard + REST API ───────────────────────────────────────────────────
+  server:
+    build: .
+    image: outbound-caller:latest
+    container_name: outbound-server
+    command: uvicorn server:app --host 0.0.0.0 --port 8000
+    env_file: .env
+    environment:
+      - DB_PATH=/data/appointments.db
+    volumes:
+      - caller-data:/data
+    ports:
+      - "8000:8000"      # change left side (e.g. "80:8000") to expose on port 80
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/stats"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+# ── Persistent volume for SQLite database ────────────────────────────────────
+volumes:
+  caller-data:
+    driver: local

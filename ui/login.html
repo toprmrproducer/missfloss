@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Miss Floss — Sign In</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --cyan:#06b6d4; --cyan-dark:#0891b2; --cyan-light:#cffafe;
+    --ink:#0f172a; --muted:#64748b; --line:#e2e8f0; --bg:#f8fafc; --card:#ffffff;
+  }
+  html,body{height:100%}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+    background:linear-gradient(135deg,#ffffff 0%,#ecfeff 55%,#cffafe 100%);
+    color:var(--ink);display:flex;align-items:center;justify-content:center;padding:24px;
+  }
+  .card{
+    background:var(--card);border:1px solid var(--line);border-radius:20px;
+    padding:40px 36px;max-width:420px;width:100%;
+    box-shadow:0 20px 50px rgba(6,182,212,.12);
+  }
+  .brand{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+  .brand-mark{
+    width:34px;height:34px;border-radius:9px;
+    background:linear-gradient(135deg,var(--cyan),var(--cyan-dark));
+    display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:18px;
+  }
+  .brand-name{font-size:1.25rem;font-weight:800;letter-spacing:-.02em}
+  .brand-name span{color:var(--cyan-dark)}
+  .sub{color:var(--muted);font-size:.9rem;margin:14px 0 26px;line-height:1.5}
+  label{display:block;font-size:.78rem;font-weight:600;color:var(--ink);margin-bottom:6px;margin-top:16px}
+  input{
+    width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:10px;
+    font-size:.95rem;color:var(--ink);background:#fff;transition:border .15s,box-shadow .15s;
+  }
+  input:focus{outline:none;border-color:var(--cyan);box-shadow:0 0 0 3px var(--cyan-light)}
+  .btn{
+    width:100%;margin-top:24px;padding:13px;border:none;border-radius:11px;cursor:pointer;
+    background:linear-gradient(135deg,var(--cyan),var(--cyan-dark));color:#fff;
+    font-weight:700;font-size:.98rem;transition:transform .12s,box-shadow .12s;
+    box-shadow:0 8px 20px rgba(6,182,212,.3);
+  }
+  .btn:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 12px 26px rgba(6,182,212,.4)}
+  .btn:disabled{opacity:.6;cursor:not-allowed}
+  .msg{margin-top:16px;font-size:.84rem;min-height:1.2em;text-align:center}
+  .msg.err{color:#dc2626}
+  .msg.ok{color:var(--cyan-dark)}
+  .toggle{margin-top:22px;text-align:center;font-size:.84rem;color:var(--muted)}
+  .toggle a{color:var(--cyan-dark);font-weight:600;cursor:pointer;text-decoration:none}
+  .foot{margin-top:28px;text-align:center;font-size:.72rem;color:var(--muted)}
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="brand">
+      <div class="brand-mark">M</div>
+      <div class="brand-name">Miss<span>Floss</span></div>
+    </div>
+    <p class="sub" id="sub">Sign in to your clinic dashboard.</p>
+
+    <div id="login-form">
+      <label for="email">Email</label>
+      <input id="email" type="email" autocomplete="username" placeholder="you@clinic.com" />
+      <label for="password">Password</label>
+      <input id="password" type="password" autocomplete="current-password" placeholder="••••••••" />
+      <button class="btn" id="submitBtn" onclick="submit()">Sign In</button>
+      <div class="msg" id="msg"></div>
+      <div class="toggle" id="toggle"></div>
+    </div>
+
+    <div class="foot">HIPAA-aware · Miss Floss Dental Voice CRM</div>
+  </div>
+
+<script>
+let mode = 'login';
+
+async function checkFirstRun(){
+  // If no doctors exist yet, offer account creation (clinic owner onboarding).
+  try {
+    const r = await fetch('/api/auth/me');
+    if (r.ok){ window.location.href = '/'; return; }
+  } catch(e){}
+  // Probe register to see if first-run (best-effort UX only)
+  document.getElementById('toggle').innerHTML =
+    'First time setting up your clinic? <a onclick="setMode(\'register\')">Create the owner account</a>';
+}
+
+function setMode(m){
+  mode = m;
+  const sub = document.getElementById('sub');
+  const btn = document.getElementById('submitBtn');
+  const tog = document.getElementById('toggle');
+  let nameField = document.getElementById('nameField');
+  if (m === 'register'){
+    sub.textContent = 'Create your clinic owner account.';
+    btn.textContent = 'Create Account';
+    if (!nameField){
+      const div = document.createElement('div');
+      div.id = 'nameField';
+      div.innerHTML = '<label for="name">Full name</label><input id="name" type="text" placeholder="Dr. Jane Doe" />';
+      document.getElementById('password').parentNode.insertBefore(div, document.getElementById('password').previousElementSibling);
+    }
+    tog.innerHTML = 'Already have an account? <a onclick="setMode(\'login\')">Sign in</a>';
+  } else {
+    sub.textContent = 'Sign in to your clinic dashboard.';
+    btn.textContent = 'Sign In';
+    if (nameField) nameField.remove();
+    tog.innerHTML = 'First time setting up your clinic? <a onclick="setMode(\'register\')">Create the owner account</a>';
+  }
+}
+
+async function submit(){
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+  const msg = document.getElementById('msg');
+  const btn = document.getElementById('submitBtn');
+  msg.className = 'msg';
+  if (!email || !password){ msg.className='msg err'; msg.textContent='Enter email and password.'; return; }
+  btn.disabled = true;
+
+  try {
+    if (mode === 'register'){
+      const name = (document.getElementById('name')||{}).value || email;
+      const rr = await fetch('/api/auth/register', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({email, password, name})
+      });
+      if(!rr.ok){ const e = await rr.json(); throw new Error(e.detail || 'Registration failed'); }
+      msg.className='msg ok'; msg.textContent='Account created. Signing you in...';
+    }
+    const r = await fetch('/api/auth/login', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({email, password})
+    });
+    if(!r.ok){ const e = await r.json(); throw new Error(e.detail || 'Login failed'); }
+    msg.className='msg ok'; msg.textContent='Welcome. Loading dashboard...';
+    window.location.href = '/';
+  } catch(err){
+    msg.className='msg err'; msg.textContent = err.message;
+    btn.disabled = false;
+  }
+}
+
+document.getElementById('password').addEventListener('keydown', e=>{ if(e.key==='Enter') submit(); });
+checkFirstRun();
+</script>
+</body>
+</html>

@@ -1,0 +1,40 @@
+# Git
+.git
+.gitignore
+
+# Python cache
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info
+dist/
+build/
+
+# Virtual environments
+.venv
+venv
+env
+
+# Local secrets — NEVER bake .env into the image
+.env
+
+# Database (mounted as a volume at runtime)
+*.db
+*.sqlite
+*.sqlite3
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.idea/
+.vscode/
+
+# Logs
+*.log
+
+# Claude memory
+.claude/

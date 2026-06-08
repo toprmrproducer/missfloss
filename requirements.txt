@@ -1,0 +1,32 @@
+# ── LiveKit core ──────────────────────────────────────────────────────────
+livekit-agents>=1.0.0               # Orchestration framework (AgentSession, Worker, etc.)
+livekit-api>=0.8.0                  # LiveKit REST/gRPC API client (SIP, dispatch)
+
+# ── AI plugins ───────────────────────────────────────────────────────────
+livekit-plugins-google>=1.0.0       # Gemini Live realtime + LLM + TTS (primary AI backend)
+livekit-plugins-deepgram>=0.8.0     # Deepgram STT — used only in pipeline fallback mode
+livekit-plugins-silero>=0.8.0       # Silero VAD — voice activity detection (pipeline mode)
+livekit-plugins-noise-cancellation  # BVCTelephony noise cancellation for SIP audio
+
+# ── Web framework ─────────────────────────────────────────────────────────
+fastapi>=0.110.0                    # API server for dashboard backend
+uvicorn[standard]>=0.29.0          # ASGI server to run FastAPI
+python-multipart>=0.0.9             # Required by FastAPI for form/file uploads
+
+# ── Database ──────────────────────────────────────────────────────────────
+supabase>=2.0.0                     # Supabase Python client (primary database)
+httpx>=0.25.0                       # Async HTTP client (used by supabase)
+
+# ── Config & utilities ────────────────────────────────────────────────────
+python-dotenv>=1.0.0                # Load .env file into os.environ
+
+# ── Scheduling ────────────────────────────────────────────────────────────
+apscheduler>=3.10.0                 # Campaign scheduler (daily/weekday morning calls)
+
+# ── Google Calendar integration (optional) ────────────────────────────────
+google-api-python-client>=2.100.0   # Google Calendar API client
+google-auth-oauthlib>=1.0.0         # OAuth2 for Google Calendar service accounts
+
+# ── Optional: SMS confirmations ──────────────────────────────────────────
+# Remove this line if you don't need Twilio SMS (keeps the install lighter)
+twilio>=8.0.0                       # Twilio REST client for SMS confirmation

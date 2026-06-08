@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Talk to the AI Agent</title>
+<script src="https://cdn.jsdelivr.net/npm/livekit-client@2.6.1/dist/livekit-client.umd.min.js"></script>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+    background:radial-gradient(ellipse at center,#1a1a2e 0%,#0d0d18 100%);
+    color:#e8e8f0;display:flex;align-items:center;justify-content:center;
+    padding:24px;
+  }
+  .card{
+    background:rgba(20,20,35,.85);backdrop-filter:blur(20px);
+    border:1px solid rgba(255,255,255,.08);border-radius:24px;
+    padding:48px 40px;max-width:480px;width:100%;text-align:center;
+    box-shadow:0 25px 60px rgba(0,0,0,.5);
+  }
+  h1{font-size:1.65rem;margin-bottom:8px;font-weight:600;letter-spacing:-.02em}
+  .sub{color:#9999b0;font-size:.95rem;margin-bottom:32px;line-height:1.5}
+  .btn{
+    background:linear-gradient(135deg,#00ff88 0%,#00ccff 100%);
+    color:#0a0a14;font-weight:700;font-size:1.05rem;
+    border:none;border-radius:14px;padding:18px 36px;cursor:pointer;
+    transition:transform .15s,box-shadow .15s;
+    box-shadow:0 8px 24px rgba(0,255,136,.35);min-width:240px;
+  }
+  .btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 12px 30px rgba(0,255,136,.45)}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  .btn.end{background:linear-gradient(135deg,#ff4d6d 0%,#ff8c42 100%);box-shadow:0 8px 24px rgba(255,77,109,.35)}
+  .status{
+    margin-top:24px;font-size:.85rem;color:#7c7c95;min-height:1.4em;
+    font-family:'SF Mono',Menlo,monospace;letter-spacing:.02em;
+  }
+  .status.live{color:#00ff88}
+  .status.error{color:#ff4d6d}
+  .visualizer{
+    display:flex;justify-content:center;gap:6px;height:60px;align-items:center;
+    margin-top:24px;opacity:0;transition:opacity .3s;
+  }
+  .visualizer.active{opacity:1}
+  .bar{
+    width:6px;background:linear-gradient(180deg,#00ff88,#00ccff);
+    border-radius:3px;height:8px;animation:bounce 1.2s infinite ease-in-out;
+  }
+  .bar:nth-child(1){animation-delay:0s}
+  .bar:nth-child(2){animation-delay:.15s}
+  .bar:nth-child(3){animation-delay:.3s}
+  .bar:nth-child(4){animation-delay:.45s}
+  .bar:nth-child(5){animation-delay:.6s}
+  @keyframes bounce{0%,100%{height:8px}50%{height:48px}}
+  .logo{
+    display:inline-block;font-family:'SF Mono',Menlo,monospace;
+    color:#00ff88;font-weight:700;font-size:.75rem;letter-spacing:.15em;
+    margin-bottom:24px;padding:6px 14px;background:rgba(0,255,136,.08);
+    border:1px solid rgba(0,255,136,.25);border-radius:20px;
+  }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">RAPIDX AI</div>
+    <h1>Talk to the AI Agent</h1>
+    <p class="sub">Click the button below, grant microphone access, and start speaking. The agent will reply in real time.</p>
+    <button class="btn" id="startBtn" onclick="startCall()">Talk to Agent</button>
+    <div class="visualizer" id="viz">
+      <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
+    </div>
+    <div class="status" id="status">Ready when you are.</div>
+  </div>
+
+<script>
+let room = null;
+
+async function startCall(){
+  const btn = document.getElementById('startBtn');
+  const status = document.getElementById('status');
+  const viz = document.getElementById('viz');
+
+  btn.disabled = true;
+  status.className = 'status';
+  status.textContent = 'Creating session...';
+
+  try {
+    const resp = await fetch('/api/web-call/start', {method:'POST'});
+    if(!resp.ok) throw new Error(`Server error: ${resp.status}`);
+    const data = await resp.json();
+
+    status.textContent = 'Connecting to agent...';
+
+    room = new LivekitClient.Room({
+      adaptiveStream: true,
+      dynacast: true,
+      audioCaptureDefaults: {echoCancellation: true, noiseSuppression: true, autoGainControl: true},
+    });
+
+    room.on(LivekitClient.RoomEvent.TrackSubscribed, (track, pub, participant) => {
+      if(track.kind === 'audio'){
+        const audioEl = track.attach();
+        audioEl.autoplay = true;
+        document.body.appendChild(audioEl);
+        status.className = 'status live';
+        status.textContent = 'Live · agent is speaking';
+        viz.classList.add('active');
+      }
+    });
+
+    room.on(LivekitClient.RoomEvent.Disconnected, () => {
+      status.className = 'status';
+      status.textContent = 'Call ended.';
+      viz.classList.remove('active');
+      btn.disabled = false;
+      btn.className = 'btn';
+      btn.textContent = 'Talk to Agent';
+      btn.onclick = startCall;
+    });
+
+    await room.connect(data.url, data.token);
+    await room.localParticipant.setMicrophoneEnabled(true);
+
+    status.className = 'status live';
+    status.textContent = 'Connected · waiting for agent to join...';
+    viz.classList.add('active');
+
+    btn.disabled = false;
+    btn.className = 'btn end';
+    btn.textContent = 'End Call';
+    btn.onclick = endCall;
+  } catch (err) {
+    status.className = 'status error';
+    status.textContent = `Error: ${err.message}`;
+    btn.disabled = false;
+  }
+}
+
+async function endCall(){
+  if(room){
+    await room.disconnect();
+    room = null;
+  }
+}
+</script>
+</body>
+</html>

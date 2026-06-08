@@ -1,0 +1,2404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Miss Floss — Dental Voice CRM</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  /* Miss Floss — light theme, cyan primary */
+  --bg:#f6fbfc;--card:#ffffff;--border:#e2e8f0;
+  --accent:#0891b2;--accent2:#06b6d4;--danger:#dc2626;--warn:#d97706;
+  --muted:#94a3b8;--text:#0f172a;--text2:#475569;
+  --mono:'SF Mono',ui-monospace,'Courier New',monospace;--sans:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+  --r:10px;
+}
+body{background:linear-gradient(180deg,#ffffff 0%,#f0fdff 100%);background-attachment:fixed;color:var(--text);font-family:var(--sans);min-height:100vh;line-height:1.5;font-size:14px}
+h2,h3{font-weight:600}
+code{font-family:var(--mono);background:#ecfeff;padding:1px 5px;border-radius:3px;font-size:.82em;color:var(--accent)}
+
+/* ── Header ── */
+header{background:var(--card);border-bottom:1px solid var(--border);padding:.9rem 1.5rem;
+  display:flex;align-items:center;gap:.75rem;position:sticky;top:0;z-index:100;box-shadow:0 1px 3px rgba(6,182,212,.06)}
+.logo{font-family:var(--sans);font-size:1.15rem;color:var(--accent);font-weight:800;letter-spacing:-.02em}
+.logo-tag{font-size:.65rem;background:#cffafe;color:var(--accent);border:1px solid #a5f3fc;
+  border-radius:20px;padding:2px 8px;text-transform:uppercase;letter-spacing:.05em}
+.hdr-right{margin-left:auto;display:flex;align-items:center;gap:.75rem}
+.live-dot{width:7px;height:7px;background:var(--accent2);border-radius:50%;animation:pulse 2s infinite}
+.logout-btn{font-size:.72rem;background:#fff;color:var(--accent);border:1px solid var(--border);border-radius:8px;padding:5px 12px;cursor:pointer;font-weight:600}
+.logout-btn:hover{background:#ecfeff;border-color:var(--accent2)}
+.doctor-chip{font-size:.74rem;color:var(--text2);font-weight:600}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.hdr-info{font-size:.72rem;color:var(--muted)}
+
+/* ── Tabs ── */
+nav{background:var(--card);border-bottom:1px solid var(--border);padding:0 1.5rem;display:flex;gap:0;overflow-x:auto}
+.tab{padding:.65rem 1.05rem;font-size:.8rem;font-weight:500;color:var(--muted);cursor:pointer;
+  border-bottom:2px solid transparent;white-space:nowrap;transition:color .15s,border-color .15s;
+  background:none;border-top:none;border-left:none;border-right:none}
+.tab:hover{color:var(--text)}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab .dot{display:inline-block;width:6px;height:6px;background:var(--danger);border-radius:50%;
+  margin-left:4px;vertical-align:middle;display:none}
+.tab .dot.show{display:inline-block}
+
+/* ── Main ── */
+main{max-width:1200px;margin:0 auto;padding:1.5rem}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+
+/* ── Section headers ── */
+.sh{font-size:.7rem;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);
+  margin-bottom:1rem;padding-bottom:.5rem;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:.5rem}
+
+/* ── Cards ── */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:1.25rem}
+.card+.card{margin-top:1rem}
+
+/* ── Stats ── */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.9rem}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:1rem 1.25rem;text-align:center}
+.stat .val{font-size:2rem;font-weight:700;font-family:var(--mono);color:var(--accent)}
+.stat .lbl{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-top:.2rem}
+.stat.blue .val{color:var(--accent2)}
+
+/* ── Forms ── */
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:.75rem}
+label,.fl{display:block;font-size:.72rem;color:var(--muted);margin-bottom:.25rem;font-weight:500;
+  text-transform:uppercase;letter-spacing:.05em}
+input[type=text],input[type=tel],input[type=date],input[type=password],select,textarea{
+  width:100%;background:#0d0d0d;border:1px solid var(--border);color:var(--text);
+  border-radius:5px;padding:.5rem .75rem;font-family:var(--mono);font-size:.82rem;
+  transition:border-color .2s;resize:vertical}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent)}
+
+/* ── Buttons ── */
+.btn{display:inline-flex;align-items:center;gap:.4rem;padding:.5rem 1.1rem;border-radius:5px;
+  border:none;font-size:.82rem;font-weight:600;cursor:pointer;transition:opacity .15s,transform .1s;white-space:nowrap}
+.btn:active{transform:scale(.97)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn-green{background:var(--accent);color:#000}
+.btn-blue{background:var(--accent2);color:#000}
+.btn-red{background:var(--danger);color:#fff;font-size:.75rem;padding:.3rem .65rem}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text)}
+.btn-ghost:hover{border-color:var(--muted)}
+
+/* ── Settings-specific ── */
+.settings-group{margin-bottom:1.5rem}
+.settings-group-title{font-size:.75rem;font-weight:700;color:var(--text);text-transform:uppercase;
+  letter-spacing:.1em;margin-bottom:.75rem;display:flex;align-items:center;gap:.6rem}
+.group-status{font-size:.68rem;font-weight:600;padding:2px 7px;border-radius:20px}
+.gs-ok{background:#00ff8818;color:var(--accent);border:1px solid #00ff8840}
+.gs-warn{background:#ffaa0018;color:var(--warn);border:1px solid #ffaa0040}
+.gs-err{background:#ff4d4d18;color:var(--danger);border:1px solid #ff4d4d40}
+.field-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.75rem;margin-bottom:.75rem}
+.field-wrap{position:relative}
+.field-wrap input{padding-right:2.5rem}
+.eye-btn{position:absolute;right:.6rem;top:50%;transform:translateY(-50%);
+  background:none;border:none;color:var(--muted);cursor:pointer;font-size:.85rem;padding:0}
+.eye-btn:hover{color:var(--text)}
+.configured-badge{display:inline-flex;align-items:center;gap:.3rem;font-size:.68rem;
+  color:var(--accent);margin-top:.25rem}
+.not-set-badge{font-size:.68rem;color:var(--muted);margin-top:.25rem}
+.field-note{font-size:.7rem;color:var(--muted);margin-top:.2rem}
+
+/* ── Charts ── */
+.charts-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:1rem;margin-top:1rem}
+.chart-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:1.1rem}
+.chart-title{font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:.75rem}
+.chart-wrap{position:relative;height:220px}
+.group-actions{display:flex;gap:.6rem;align-items:center;margin-top:.75rem;flex-wrap:wrap}
+.group-save-status{font-size:.72rem;min-height:1.2em}
+.group-save-status.ok{color:var(--accent)}
+.group-save-status.err{color:var(--danger)}
+
+/* ── Prompt editor ── */
+#prompt-textarea{min-height:340px;font-family:var(--mono);font-size:.8rem;line-height:1.6;
+  background:#090909;color:#d0d0d0}
+.prompt-status{font-size:.72rem;color:var(--muted);margin-top:.5rem;min-height:1.2em}
+.prompt-status.ok{color:var(--accent)}
+.prompt-status.err{color:var(--danger)}
+
+/* ── Per-call prompt ── */
+.prompt-toggle{display:flex;align-items:center;gap:.5rem;margin:.75rem 0;cursor:pointer;font-size:.8rem;color:var(--text2)}
+.prompt-toggle input[type=checkbox]{accent-color:var(--accent);width:15px;height:15px;cursor:pointer}
+.per-call-prompt{display:none;margin-top:.5rem}
+.per-call-prompt.visible{display:block}
+
+/* ── Tables ── */
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.78rem;font-family:var(--mono)}
+thead th{text-align:left;padding:.55rem .75rem;border-bottom:1px solid var(--border);
+  color:var(--muted);font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;white-space:nowrap}
+tbody td{padding:.5rem .75rem;border-bottom:1px solid #1a1a1a;vertical-align:middle}
+tbody tr:hover{background:#141414}
+.trunc{max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* ── Badges ── */
+.badge{display:inline-block;padding:2px 7px;border-radius:20px;font-size:.67rem;
+  font-weight:700;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}
+.b-booked{background:#00ff8818;color:var(--accent);border:1px solid #00ff8840}
+.b-not_interested,.b-error,.b-cancelled{background:#ff4d4d18;color:var(--danger);border:1px solid #ff4d4d40}
+.b-voicemail,.b-warning{background:#ffaa0018;color:var(--warn);border:1px solid #ffaa0040}
+.b-wrong_number{background:#33333318;color:#888;border:1px solid #333}
+.b-callback_requested,.b-info{background:#00ccff18;color:var(--accent2);border:1px solid #00ccff40}
+
+/* ── Log level colors ── */
+tr.lv-error td:first-child{border-left:3px solid var(--danger)}
+tr.lv-warning td:first-child{border-left:3px solid var(--warn)}
+tr.lv-info td:first-child{border-left:3px solid var(--accent2)}
+tr.lv-error td{color:#ff6b6b}
+tr.lv-warning td{color:#ffbb44}
+tr.lv-info td{color:#4dbb7a}
+
+/* ── Log filter buttons ── */
+.log-filters{display:flex;gap:.4rem;flex-wrap:wrap;align-items:center}
+.filter-btn{background:transparent;border:1px solid var(--border);color:var(--muted);
+  padding:.3rem .7rem;border-radius:4px;cursor:pointer;font-size:.73rem;font-weight:600;
+  transition:color .15s,border-color .15s,background .15s;white-space:nowrap}
+.filter-btn:hover{border-color:var(--muted);color:var(--text)}
+.filter-btn.active-all{border-color:var(--accent);color:var(--accent);background:#00ff8810}
+.filter-btn.active-info{border-color:var(--accent2);color:var(--accent2);background:#00ccff10}
+.filter-btn.active-warning{border-color:var(--warn);color:var(--warn);background:#ffaa0010}
+.filter-btn.active-error{border-color:var(--danger);color:var(--danger);background:#ff4d4d10}
+.filter-sep{width:1px;height:20px;background:var(--border);margin:0 .2rem}
+
+/* ── Auto-refresh indicator ── */
+.refresh-pill{display:inline-flex;align-items:center;gap:.35rem;font-size:.7rem;color:var(--muted);
+  background:#ffffff08;border:1px solid var(--border);border-radius:20px;padding:2px 8px}
+.refresh-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite}
+.refresh-dot.paused{background:var(--muted);animation:none}
+
+/* ── Expandable detail row ── */
+tr.log-row{cursor:pointer}
+tr.log-row:hover td{background:#1a1a1a}
+tr.detail-row{display:none}
+tr.detail-row.open{display:table-row}
+tr.detail-row td{background:#111;font-family:var(--mono);font-size:.73rem;color:#aaa;
+  padding:.6rem .75rem;white-space:pre-wrap;word-break:break-all;border-left:3px solid #333}
+
+/* ── Pager ── */
+.pager{display:flex;gap:.5rem;margin-top:.75rem;align-items:center}
+.pager button{background:var(--card);border:1px solid var(--border);color:var(--text);
+  padding:.3rem .7rem;border-radius:4px;cursor:pointer;font-size:.75rem}
+.pager button:disabled{opacity:.35;cursor:not-allowed}
+.pager span{font-size:.72rem;color:var(--muted)}
+
+/* ── Progress ── */
+.prog-wrap{background:#111;border-radius:4px;height:5px;margin-top:.75rem;display:none;overflow:hidden}
+.prog-bar{height:100%;background:var(--accent);width:0%;transition:width .3s;border-radius:4px}
+.prog-lbl{font-size:.72rem;color:var(--muted);margin-top:.4rem;display:none}
+
+/* ── Misc ── */
+.empty{text-align:center;padding:2rem;color:var(--muted);font-size:.82rem}
+.inline-err{font-size:.75rem;color:var(--danger);margin-top:.5rem;display:none}
+.divider{border:none;border-top:1px solid var(--border);margin:1.25rem 0}
+.info-box{background:#00ff8808;border:1px solid #00ff8825;border-radius:5px;
+  padding:.7rem 1rem;font-size:.78rem;color:var(--text2);line-height:1.7;margin-bottom:1rem}
+.filter-row{display:flex;gap:.6rem;align-items:flex-end;flex-wrap:wrap;margin-bottom:.75rem}
+
+/* ── Toast ── */
+#toasts{position:fixed;bottom:1.25rem;right:1.25rem;display:flex;flex-direction:column;gap:.4rem;z-index:9999}
+.toast{background:var(--card);border:1px solid var(--border);border-radius:6px;
+  padding:.65rem .9rem;font-size:.8rem;max-width:320px;
+  animation:tin .22s ease;display:flex;align-items:flex-start;gap:.5rem}
+.toast.ok{border-left:3px solid var(--accent)}
+.toast.err{border-left:3px solid var(--danger)}
+@keyframes tin{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:none}}
+
+/* ── Live Config chips ── */
+.cfg-chip{background:#111;border:1px solid var(--border);border-radius:6px;padding:.6rem .85rem;
+  cursor:pointer;transition:border-color .15s}
+.cfg-chip:hover{border-color:var(--accent)}
+.cfg-chip-lbl{font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:.25rem}
+.cfg-chip-val{font-family:var(--mono);font-size:.82rem;color:var(--accent);font-weight:600;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* ── Spinner ── */
+.spin{display:inline-block;width:13px;height:13px;border:2px solid #00ff8830;
+  border-top-color:var(--accent);border-radius:50%;animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+@media(max-width:600px){nav{padding:0 .75rem}main{padding:1rem .75rem}.form-grid,.field-row{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header>
+  <span class="logo">🦷 Miss Floss</span>
+  <span class="logo-tag">Dental Voice CRM</span>
+  <div class="hdr-right">
+    <span class="live-dot"></span>
+    <span class="hdr-info" id="hdr-clock"></span>
+    <span class="doctor-chip" id="doctor-chip"></span>
+    <button class="logout-btn" onclick="doLogout()">Log out</button>
+  </div>
+</header>
+
+<nav>
+  <button class="tab active" data-tab="stats">📊 Stats</button>
+  <button class="tab" data-tab="single">📞 Single Call</button>
+  <button class="tab" data-tab="batch">📋 Batch Call</button>
+  <button class="tab" data-tab="campaigns">🚀 Campaigns</button>
+  <button class="tab" data-tab="prompt">✏️ AI Prompt</button>
+  <button class="tab" data-tab="appointments">📅 Appointments</button>
+  <button class="tab" data-tab="logs">📝 Call Logs</button>
+  <button class="tab" data-tab="crm">👥 CRM</button>
+  <button class="tab" data-tab="agents">🤖 Agents</button>
+  <button class="tab" data-tab="settings">⚙️ Settings</button>
+  <button class="tab" data-tab="errors" id="tab-errors-btn">📋 Logs <span class="dot" id="err-dot"></span></button>
+  <button class="tab" data-tab="setup">🔧 Setup</button>
+  <button class="tab" data-tab="livelink">🔗 Live Link</button>
+</nav>
+
+<main>
+
+<!-- ══ STATS ══ -->
+<div class="tab-panel active" id="tab-stats">
+  <div class="sh">Live Stats <span style="color:var(--accent);font-size:.65rem">● auto-refresh 10s</span></div>
+  <div class="stats-grid">
+    <div class="stat"><div class="val" id="s-total">—</div><div class="lbl">Total Calls</div></div>
+    <div class="stat"><div class="val" id="s-booked">—</div><div class="lbl">Booked</div></div>
+    <div class="stat"><div class="val" id="s-ni">—</div><div class="lbl">Not Interested</div></div>
+    <div class="stat blue"><div class="val" id="s-rate">—</div><div class="lbl">Booking Rate</div></div>
+    <div class="stat blue"><div class="val" id="s-dur">—</div><div class="lbl">Avg Duration (s)</div></div>
+  </div>
+
+  <!-- Live Config card -->
+  <div class="card" style="margin-top:1.25rem">
+    <div class="sh" style="margin-bottom:1rem">Live Configuration <span style="color:var(--muted);font-size:.65rem;font-weight:400">— click any value to edit in Settings</span></div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:.75rem" id="live-config-grid">
+      <div class="cfg-chip" onclick="switchTab('settings')">
+        <div class="cfg-chip-lbl">AI Model</div>
+        <div class="cfg-chip-val" id="lc-model">—</div>
+      </div>
+      <div class="cfg-chip" onclick="switchTab('settings')">
+        <div class="cfg-chip-lbl">Voice</div>
+        <div class="cfg-chip-val" id="lc-voice">—</div>
+      </div>
+      <div class="cfg-chip" onclick="switchTab('settings')">
+        <div class="cfg-chip-lbl">Forwarding Number</div>
+        <div class="cfg-chip-val" id="lc-fwd">—</div>
+      </div>
+      <div class="cfg-chip" onclick="switchTab('settings')">
+        <div class="cfg-chip-lbl">Outbound Number (DID)</div>
+        <div class="cfg-chip-val" id="lc-did">—</div>
+      </div>
+      <div class="cfg-chip" onclick="switchTab('settings')">
+        <div class="cfg-chip-lbl">Cal.com</div>
+        <div class="cfg-chip-val" id="lc-calcom">—</div>
+      </div>
+      <div class="cfg-chip" onclick="switchTab('prompt')">
+        <div class="cfg-chip-lbl">AI Prompt</div>
+        <div class="cfg-chip-val" id="lc-prompt">—</div>
+      </div>
+      <div class="cfg-chip" onclick="switchTab('settings')">
+        <div class="cfg-chip-lbl">SIP Trunk</div>
+        <div class="cfg-chip-val" id="lc-trunk">—</div>
+      </div>
+      <div class="cfg-chip" onclick="switchTab('settings')">
+        <div class="cfg-chip-lbl">Realtime Mode</div>
+        <div class="cfg-chip-val" id="lc-realtime">—</div>
+      </div>
+    </div>
+    <div style="margin-top:.75rem;font-size:.72rem;color:var(--muted)">
+      <strong style="color:var(--text2)">Cost estimate (Gemini Live):</strong>
+      VoiceLink SIP ≈ ₹1.00/min · LiveKit ≈ ₹0.17/min · Gemini Live ≈ ₹0.03/min · Deepgram TTS ≈ ₹0.01/call
+      → <strong style="color:var(--accent)">≈ ₹1.20/min total</strong>
+      · A typical 2-min call costs ≈ <strong style="color:var(--accent)">₹2.50</strong>
+    </div>
+  </div>
+
+  <!-- Charts row -->
+  <div class="charts-grid">
+    <div class="chart-card">
+      <div class="chart-title">📊 Call Outcomes</div>
+      <div class="chart-wrap"><canvas id="chart-outcomes"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">📈 Calls Over Time (last 14 days)</div>
+      <div class="chart-wrap"><canvas id="chart-timeline"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">⏱ Avg Duration by Outcome</div>
+      <div class="chart-wrap"><canvas id="chart-duration"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SINGLE CALL ══ -->
+<div class="tab-panel" id="tab-single">
+  <div class="sh">Single Outbound Call</div>
+  <div class="card">
+    <form id="call-form" autocomplete="off">
+      <div class="form-grid">
+        <div><label for="f-phone">Phone Number *</label><input type="tel" id="f-phone" placeholder="+919876543210" required /></div>
+        <div><label for="f-lead">Lead Name</label><input type="text" id="f-lead" placeholder="Rahul Sharma" /></div>
+        <div><label for="f-biz">Business Name</label><input type="text" id="f-biz" placeholder="HealthFirst Clinic" /></div>
+        <div><label for="f-svc">Service Type</label><input type="text" id="f-svc" placeholder="Dental Checkup" /></div>
+        <div>
+          <label for="f-agent-profile">Agent Profile</label>
+          <select id="f-agent-profile">
+            <option value="">— Use Global Default —</option>
+          </select>
+        </div>
+      </div>
+      <hr class="divider" />
+      <div style="font-size:.78rem;color:var(--text2);margin-bottom:.5rem">
+        Uses the prompt saved in <button type="button" class="btn btn-ghost" style="padding:2px 8px;font-size:.72rem" onclick="switchTab('prompt')">✏️ AI Prompt</button>.
+        Toggle below to override for this call only.
+      </div>
+      <label class="prompt-toggle" for="sc-chk">
+        <input type="checkbox" id="sc-chk" /> Override system prompt for this call only
+      </label>
+      <div class="per-call-prompt" id="sc-area">
+        <label for="sc-prompt">Custom Prompt (use {lead_name}, {business_name}, {service_type})</label>
+        <textarea id="sc-prompt" rows="7" placeholder="You are Priya from {business_name}..."></textarea>
+      </div>
+      <div style="margin-top:1rem;display:flex;gap:.75rem;align-items:center">
+        <button type="submit" class="btn btn-green" id="call-btn"><span id="call-lbl">▶ Start Call</span></button>
+        <span style="font-size:.72rem;color:var(--muted)">VoiceLink SIP · Gemini Live</span>
+      </div>
+      <div class="inline-err" id="call-err"></div>
+    </form>
+  </div>
+</div>
+
+<!-- ══ BATCH CALL ══ -->
+<div class="tab-panel" id="tab-batch">
+  <div class="sh">Batch Call — CSV Upload</div>
+  <div class="info-box">
+    CSV header: <code>phone,lead_name,business_name,service_type</code><br>
+    Phones must include country code: <code>+919876543210</code>
+  </div>
+  <div class="card">
+    <label class="prompt-toggle" for="bc-chk">
+      <input type="checkbox" id="bc-chk" /> Use a custom prompt for the entire batch
+    </label>
+    <div class="per-call-prompt" id="bc-area">
+      <label for="bc-prompt">Batch Custom Prompt</label>
+      <textarea id="bc-prompt" rows="5" placeholder="You are Priya from {business_name}..."></textarea>
+    </div>
+    <div style="margin:.75rem 0">
+      <label for="bc-agent-profile">Agent Profile</label>
+      <select id="bc-agent-profile" style="max-width:320px">
+        <option value="">— Use Global Default —</option>
+      </select>
+    </div>
+    <hr class="divider" />
+    <div style="display:flex;gap:.75rem;align-items:flex-end;flex-wrap:wrap;margin-bottom:.75rem">
+      <div><label for="bc-file">CSV File</label><input type="file" id="bc-file" accept=".csv" style="font-size:.8rem;color:var(--text);cursor:pointer;display:block;margin-top:.25rem" /></div>
+      <div><label for="bc-delay">Delay (seconds)</label><input type="text" id="bc-delay" value="3" style="width:70px" /></div>
+    </div>
+    <div id="bc-preview" style="display:none;margin-bottom:.75rem">
+      <div class="sh">Preview (<span id="bc-count">0</span> rows)</div>
+      <div class="tw"><table><thead><tr><th>#</th><th>Phone</th><th>Lead</th><th>Business</th><th>Service</th></tr></thead>
+      <tbody id="bc-tbody"></tbody></table></div>
+    </div>
+    <div style="display:flex;gap:.75rem;flex-wrap:wrap">
+      <button class="btn btn-blue" id="bc-parse">📂 Parse CSV</button>
+      <button class="btn btn-green" id="bc-start" disabled>▶ Start Batch</button>
+    </div>
+    <div class="prog-wrap" id="bc-pw"><div class="prog-bar" id="bc-pb"></div></div>
+    <div class="prog-lbl" id="bc-pl"></div>
+    <div class="inline-err" id="bc-err"></div>
+  </div>
+</div>
+
+<!-- ══ CAMPAIGNS ══ -->
+<div class="tab-panel" id="tab-campaigns">
+  <div class="sh">🚀 Campaigns — Scheduled Mass Calling</div>
+  <div class="info-box">
+    Campaigns let you schedule mass outbound calls. <strong>Once</strong> runs immediately. <strong>Daily</strong> and <strong>Weekdays</strong> use APScheduler to fire every morning at your chosen time.<br>
+    CSV header: <code>phone,lead_name,business_name,service_type</code>
+  </div>
+
+  <!-- Create campaign -->
+  <div class="card" id="camp-create-card">
+    <div class="settings-group-title" style="margin-bottom:.75rem;cursor:pointer" onclick="toggleCampForm()">
+      + Create New Campaign <span id="camp-form-toggle" style="font-size:.7rem;color:var(--muted)">▼ expand</span>
+    </div>
+    <div id="camp-form" style="display:none">
+      <div class="form-grid" style="margin-bottom:.75rem">
+        <div><label for="camp-name">Campaign Name *</label><input type="text" id="camp-name" placeholder="Morning Dental Outreach" /></div>
+        <div>
+          <label for="camp-schedule">Schedule</label>
+          <select id="camp-schedule" onchange="onCampScheduleChange()">
+            <option value="once">Run Once (immediately)</option>
+            <option value="daily">Daily at time</option>
+            <option value="weekdays">Weekdays (Mon–Fri) at time</option>
+          </select>
+        </div>
+        <div id="camp-time-wrap" style="display:none">
+          <label for="camp-time">Time (IST)</label>
+          <input type="text" id="camp-time" value="09:00" placeholder="09:00" style="width:100px" />
+        </div>
+        <div>
+          <label for="camp-delay">Delay between calls (s)</label>
+          <input type="text" id="camp-delay" value="3" style="width:70px" />
+        </div>
+        <div>
+          <label for="camp-agent-profile">Agent Profile</label>
+          <select id="camp-agent-profile">
+            <option value="">— Use Global Default —</option>
+          </select>
+        </div>
+      </div>
+      <label class="prompt-toggle" for="camp-prompt-chk">
+        <input type="checkbox" id="camp-prompt-chk" onchange="$('camp-prompt-area').style.display=this.checked?'block':'none'" /> Use custom prompt for this campaign
+      </label>
+      <div id="camp-prompt-area" style="display:none;margin:.5rem 0">
+        <textarea id="camp-prompt" rows="4" placeholder="You are Priya from {business_name}..."></textarea>
+      </div>
+      <hr class="divider" />
+      <div style="display:flex;gap:.75rem;align-items:flex-end;flex-wrap:wrap;margin-bottom:.75rem">
+        <div><label for="camp-file">CSV File *</label><input type="file" id="camp-file" accept=".csv" style="font-size:.8rem;color:var(--text);cursor:pointer;display:block;margin-top:.25rem" /></div>
+        <button class="btn btn-blue" id="camp-parse-btn" onclick="parseCampCSV()">📂 Parse CSV</button>
+      </div>
+      <div id="camp-preview" style="display:none;margin-bottom:.75rem">
+        <div style="font-size:.72rem;color:var(--muted);margin-bottom:.4rem"><span id="camp-count">0</span> contacts loaded</div>
+        <div class="tw"><table><thead><tr><th>#</th><th>Phone</th><th>Lead</th><th>Business</th></tr></thead>
+        <tbody id="camp-preview-tbody"></tbody></table></div>
+      </div>
+      <div style="display:flex;gap:.75rem;flex-wrap:wrap">
+        <button class="btn btn-green" id="camp-create-btn" onclick="createCampaign()" disabled>🚀 Create Campaign</button>
+        <button class="btn btn-ghost" onclick="resetCampForm()">↺ Reset</button>
+      </div>
+      <div class="inline-err" id="camp-err"></div>
+    </div>
+  </div>
+
+  <!-- Campaign list -->
+  <div class="card" style="margin-top:1rem">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem">
+      <div class="sh" style="margin:0;border:none;padding:0">Saved Campaigns</div>
+      <button class="btn btn-ghost" style="font-size:.75rem" onclick="loadCampaigns()">↻ Refresh</button>
+    </div>
+    <div class="tw"><table>
+      <thead><tr><th>Name</th><th>Schedule</th><th>Contacts</th><th>Dispatched</th><th>Failed</th><th>Last Run</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody id="camp-tbody"><tr><td colspan="8" class="empty">Loading...</td></tr></tbody>
+    </table></div>
+  </div>
+</div>
+
+<!-- ══ AI PROMPT ══ -->
+<div class="tab-panel" id="tab-prompt">
+  <div class="sh">✏️ AI Agent System Prompt</div>
+  <div class="info-box">
+    Global prompt used for every call. Variables auto-filled per call:<br>
+    <code>{lead_name}</code> · <code>{business_name}</code> · <code>{service_type}</code><br>
+    You can override per-call from the Single Call or Batch tab.
+  </div>
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem;flex-wrap:wrap;gap:.5rem">
+      <div style="font-size:.8rem;color:var(--text2)">
+        <span id="prompt-custom-badge" style="display:none" class="badge b-booked">CUSTOM</span>
+        <span id="prompt-default-label" style="color:var(--muted);font-size:.72rem">Using built-in default</span>
+      </div>
+      <div style="display:flex;gap:.5rem">
+        <button class="btn btn-ghost" id="prompt-reset">↩ Reset to Default</button>
+        <button class="btn btn-green" id="prompt-save">💾 Save Prompt</button>
+      </div>
+    </div>
+    <textarea id="prompt-textarea" spellcheck="false" placeholder="Loading..."></textarea>
+    <div class="prompt-status" id="prompt-status"></div>
+  </div>
+</div>
+
+<!-- ══ APPOINTMENTS ══ -->
+<div class="tab-panel" id="tab-appointments">
+  <div class="sh">Booked Appointments</div>
+  <div class="card">
+    <div class="filter-row">
+      <div><label for="appt-date">Filter by date</label><input type="date" id="appt-date" style="width:auto" /></div>
+      <button class="btn btn-ghost" id="appt-clear">✕ Clear</button>
+      <button class="btn btn-ghost" style="margin-left:auto" onclick="loadAppointments()">↻ Refresh</button>
+    </div>
+    <div class="tw"><table>
+      <thead><tr><th>Name</th><th>Phone</th><th>Date</th><th>Time</th><th>Service</th><th>Status</th><th>Booked At</th><th></th></tr></thead>
+      <tbody id="appt-tbody"><tr><td colspan="8" class="empty">Loading...</td></tr></tbody>
+    </table></div>
+  </div>
+</div>
+
+<!-- ══ CALL LOGS ══ -->
+<div class="tab-panel" id="tab-logs">
+  <div class="sh">Call Logs</div>
+  <div class="card">
+    <div style="display:flex;justify-content:flex-end;margin-bottom:.6rem">
+      <button class="btn btn-ghost" onclick="loadCalls()">↻ Refresh</button>
+    </div>
+    <div class="tw"><table>
+      <thead><tr><th>Phone</th><th>Lead</th><th>Outcome</th><th>Reason</th><th>Duration</th><th>Timestamp</th></tr></thead>
+      <tbody id="calls-tbody"><tr><td colspan="6" class="empty">Loading...</td></tr></tbody>
+    </table></div>
+    <div class="pager">
+      <button id="calls-prev" disabled>← Prev</button>
+      <button id="calls-next">Next →</button>
+      <span id="calls-pg">Page 1</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══ CRM ══ -->
+<div class="tab-panel" id="tab-crm">
+  <div class="sh">👥 CRM — Contact History</div>
+  <div class="card">
+    <div style="display:flex;justify-content:flex-end;margin-bottom:.6rem">
+      <button class="btn btn-ghost" onclick="loadCRM()">↻ Refresh</button>
+    </div>
+    <div class="tw"><table>
+      <thead><tr><th>Phone</th><th>Lead Name</th><th>Total Calls</th><th>Booked</th><th>Last Call</th><th>Last Outcome</th><th></th></tr></thead>
+      <tbody id="crm-tbody"><tr><td colspan="7" class="empty">Loading...</td></tr></tbody>
+    </table></div>
+  </div>
+
+  <!-- Contact detail drawer -->
+  <div id="crm-detail" style="display:none;margin-top:1rem">
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1rem;flex-wrap:wrap">
+        <div>
+          <div style="font-size:1.05rem;font-weight:700;font-family:var(--mono);color:var(--accent)" id="crm-detail-phone">—</div>
+          <div style="font-size:.8rem;color:var(--text2)" id="crm-detail-name">—</div>
+        </div>
+        <button class="btn btn-ghost" style="margin-left:auto;font-size:.72rem" onclick="closeCRMDetail()">✕ Close</button>
+      </div>
+      <div class="sh" style="margin-bottom:.75rem">Call History</div>
+      <div class="tw"><table id="crm-calls-table">
+        <thead><tr><th>Date</th><th>Outcome</th><th>Duration</th><th>Reason</th><th>Notes</th><th>Recording</th></tr></thead>
+        <tbody id="crm-calls-tbody"><tr><td colspan="6" class="empty">Loading...</td></tr></tbody>
+      </table></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ AGENTS ══ -->
+<div class="tab-panel" id="tab-agents">
+  <div class="sh">🤖 Agent Profiles</div>
+  <div class="info-box">
+    Create named agent personas with their own <strong>voice, model, system prompt and tools</strong>.<br>
+    Select an agent when placing a call or running a campaign to override the global defaults.<br>
+    Mark one as <strong>default</strong> to use it for all calls with no profile specified.
+  </div>
+
+  <!-- Create / Edit form -->
+  <div class="card" id="agent-form-card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem">
+      <b id="agent-form-title" style="font-size:.9rem">➕ New Agent Profile</b>
+      <button class="btn btn-ghost" style="font-size:.72rem" id="agent-form-cancel" onclick="resetAgentForm()" style="display:none">✕ Cancel</button>
+    </div>
+    <div class="form-grid" style="margin-bottom:.75rem">
+      <div>
+        <label for="agent-name">Profile Name *</label>
+        <input type="text" id="agent-name" placeholder='e.g. "Priya — Dental Clinic"' />
+      </div>
+      <div>
+        <label for="agent-voice">Voice</label>
+        <select id="agent-voice">
+          <optgroup label="Female voices">
+            <option value="Aoede">Aoede — warm, expressive ⭐</option>
+            <option value="Achernar">Achernar — soft &amp; clear</option>
+            <option value="Autonoe">Autonoe — natural female</option>
+            <option value="Callirrhoe">Callirrhoe — gentle female</option>
+            <option value="Despina">Despina — bright female</option>
+            <option value="Erinome">Erinome — smooth female</option>
+            <option value="Gacrux">Gacrux — rich female</option>
+            <option value="Kore">Kore — soft, calm</option>
+            <option value="Laomedeia">Laomedeia — light female</option>
+            <option value="Leda">Leda — clear female</option>
+            <option value="Pulcherrima">Pulcherrima — warm female</option>
+            <option value="Sulafat">Sulafat — smooth female</option>
+            <option value="Vindemiatrix">Vindemiatrix — professional female</option>
+            <option value="Zephyr">Zephyr — airy female</option>
+          </optgroup>
+          <optgroup label="Male voices">
+            <option value="Achird">Achird — clear male</option>
+            <option value="Algenib">Algenib — strong male</option>
+            <option value="Algieba">Algieba — rich male</option>
+            <option value="Alnilam">Alnilam — deep male</option>
+            <option value="Charon">Charon — calm, deep</option>
+            <option value="Enceladus">Enceladus — expressive male</option>
+            <option value="Fenrir">Fenrir — confident male</option>
+            <option value="Iapetus">Iapetus — steady male</option>
+            <option value="Orus">Orus — warm male</option>
+            <option value="Perseus">Perseus — clear male</option>
+            <option value="Puck">Puck — bright, energetic</option>
+            <option value="Rasalgethi">Rasalgethi — bold male</option>
+            <option value="Sadachbia">Sadachbia — natural male</option>
+            <option value="Sadaltager">Sadaltager — smooth male</option>
+            <option value="Schedar">Schedar — professional male</option>
+            <option value="Umbriel">Umbriel — deep, calm</option>
+            <option value="Zubenelgenubi">Zubenelgenubi — resonant male</option>
+          </optgroup>
+        </select>
+      </div>
+      <div>
+        <label for="agent-model">Model</label>
+        <select id="agent-model">
+          <option value="gemini-3.1-flash-live-preview">gemini-3.1-flash-live-preview ⭐</option>
+          <option value="gemini-2.5-flash-native-audio-latest">gemini-2.5-flash-native-audio-latest</option>
+          <option value="gemini-2.5-flash-native-audio-preview-12-2025">gemini-2.5-flash-native-audio-preview-12-2025</option>
+        </select>
+      </div>
+    </div>
+    <div style="margin-bottom:.75rem">
+      <label for="agent-tools">Enabled Tools (JSON array — empty = all)</label>
+      <input type="text" id="agent-tools" placeholder='["book_appointment","end_call","lookup_contact"]' />
+      <div style="font-size:.68rem;color:var(--muted);margin-top:.25rem">
+        Available: check_availability · book_appointment · end_call · transfer_to_human · send_sms_confirmation · lookup_contact · remember_details · book_calcom · cancel_calcom
+      </div>
+    </div>
+    <div style="margin-bottom:.75rem">
+      <label for="agent-prompt">System Prompt (leave blank to use global AI Prompt tab setting)</label>
+      <textarea id="agent-prompt" rows="6" placeholder="You are Priya, a friendly appointment booking assistant calling on behalf of {business_name}..."></textarea>
+    </div>
+    <div style="display:flex;gap:.75rem;align-items:center;flex-wrap:wrap">
+      <button class="btn btn-green" id="agent-save-btn" onclick="saveAgentProfile()">💾 Save Profile</button>
+      <label style="display:flex;align-items:center;gap:.35rem;text-transform:none;letter-spacing:0;font-size:.82rem;color:var(--text);cursor:pointer;margin:0">
+        <input type="checkbox" id="agent-is-default" /> Set as default agent
+      </label>
+      <input type="hidden" id="agent-edit-id" value="" />
+    </div>
+    <div class="inline-err" id="agent-form-err"></div>
+  </div>
+
+  <!-- Profile list -->
+  <div class="card" style="margin-top:1rem">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem">
+      <div class="sh" style="margin:0;border:none;padding:0">Saved Profiles</div>
+      <button class="btn btn-ghost" style="font-size:.75rem" onclick="loadAgentProfiles()">↻ Refresh</button>
+    </div>
+    <div class="tw"><table>
+      <thead><tr><th>Name</th><th>Voice</th><th>Model</th><th>Tools</th><th>Default</th><th>Actions</th></tr></thead>
+      <tbody id="agents-tbody"><tr><td colspan="6" class="empty">Loading...</td></tr></tbody>
+    </table></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- ══ SETTINGS (BYOK) ══════════════════════════════════ -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div class="tab-panel" id="tab-settings">
+  <div class="sh">⚙️ API Keys &amp; Configuration</div>
+
+  <div class="info-box">
+    Enter your API keys here — no <code>.env</code> file needed.<br>
+    Sensitive values (secrets, passwords) are <strong>stored encrypted-at-rest in SQLite</strong> and
+    <strong>never returned to the browser</strong> once saved. Leave a field blank to keep the existing value.
+    Settings saved here override any values in <code>.env</code>.
+  </div>
+
+  <!-- ── Group 1: LiveKit ── -->
+  <div class="card settings-group" id="grp-livekit">
+    <div class="settings-group-title">
+      1. LiveKit <span class="group-status gs-warn" id="gs-livekit">Not configured</span>
+    </div>
+    <p style="font-size:.75rem;color:var(--text2);margin-bottom:.75rem">
+      Get your free keys at <code>cloud.livekit.io</code> → Project Settings → Keys
+    </p>
+    <div class="field-row">
+      <div>
+        <label for="s-lk-url">LiveKit URL <span style="color:var(--danger)">*</span></label>
+        <input type="text" id="s-lk-url" placeholder="wss://your-project.livekit.cloud" />
+        <div class="field-note">Starts with <code>wss://</code></div>
+      </div>
+      <div>
+        <label for="s-lk-key">API Key <span style="color:var(--danger)">*</span></label>
+        <div class="field-wrap">
+          <input type="password" id="s-lk-key" placeholder="Leave blank to keep saved value" autocomplete="new-password" />
+          <button type="button" class="eye-btn" onclick="toggleEye('s-lk-key',this)">👁</button>
+        </div>
+        <div id="cfg-lk-key" class="not-set-badge">Not configured</div>
+      </div>
+      <div>
+        <label for="s-lk-secret">API Secret <span style="color:var(--danger)">*</span></label>
+        <div class="field-wrap">
+          <input type="password" id="s-lk-secret" placeholder="Leave blank to keep saved value" autocomplete="new-password" />
+          <button type="button" class="eye-btn" onclick="toggleEye('s-lk-secret',this)">👁</button>
+        </div>
+        <div id="cfg-lk-secret" class="not-set-badge">Not configured</div>
+      </div>
+    </div>
+    <div class="group-actions">
+      <button class="btn btn-green" onclick="saveGroup('livekit')">💾 Save LiveKit Keys</button>
+      <span class="group-save-status" id="gss-livekit"></span>
+    </div>
+  </div>
+
+  <!-- ── Group 2: Google Gemini ── -->
+  <div class="card settings-group" id="grp-google">
+    <div class="settings-group-title">
+      2. Google Gemini <span class="group-status gs-warn" id="gs-google">Not configured</span>
+    </div>
+    <p style="font-size:.75rem;color:var(--text2);margin-bottom:.75rem">
+      Free API key at <code>aistudio.google.com/app/apikey</code>
+    </p>
+    <div class="field-row">
+      <div>
+        <label for="s-g-key">Gemini API Key <span style="color:var(--danger)">*</span></label>
+        <div class="field-wrap">
+          <input type="password" id="s-g-key" placeholder="AIza..." autocomplete="new-password" />
+          <button type="button" class="eye-btn" onclick="toggleEye('s-g-key',this)">👁</button>
+        </div>
+        <div id="cfg-g-key" class="not-set-badge">Not configured</div>
+      </div>
+      <div>
+        <label for="s-g-model">Gemini Model</label>
+        <select id="s-g-model">
+          <optgroup label="Gemini 3.1 Live (Latest — Gemini API)">
+            <option value="gemini-3.1-flash-live-preview">gemini-3.1-flash-live-preview ⭐ recommended</option>
+          </optgroup>
+          <optgroup label="Gemini 2.5 Live (Gemini API)">
+            <option value="gemini-2.5-flash-native-audio-latest">gemini-2.5-flash-native-audio-latest</option>
+            <option value="gemini-2.5-flash-native-audio-preview-12-2025">gemini-2.5-flash-native-audio-preview-12-2025</option>
+            <option value="gemini-2.5-flash-native-audio-preview-09-2025">gemini-2.5-flash-native-audio-preview-09-2025</option>
+          </optgroup>
+          <optgroup label="Gemini 2.0 Live (Gemini API)">
+            <option value="gemini-2.0-flash-live-001">gemini-2.0-flash-live-001</option>
+          </optgroup>
+          <optgroup label="Custom">
+            <option value="__custom__">Enter custom model name…</option>
+          </optgroup>
+        </select>
+        <input type="text" id="s-g-model-custom" placeholder="e.g. gemini-3.0-flash-live-001" style="display:none;margin-top:6px;" />
+      </div>
+      <div>
+        <label for="s-g-voice">TTS Voice</label>
+        <select id="s-g-voice">
+          <optgroup label="Female voices">
+            <option value="Aoede">Aoede — warm, expressive ⭐</option>
+            <option value="Achernar">Achernar — soft &amp; clear</option>
+            <option value="Autonoe">Autonoe — natural female</option>
+            <option value="Callirrhoe">Callirrhoe — gentle female</option>
+            <option value="Despina">Despina — bright female</option>
+            <option value="Erinome">Erinome — smooth female</option>
+            <option value="Gacrux">Gacrux — rich female</option>
+            <option value="Kore">Kore — soft, calm</option>
+            <option value="Laomedeia">Laomedeia — light female</option>
+            <option value="Leda">Leda — clear female</option>
+            <option value="Pulcherrima">Pulcherrima — warm female</option>
+            <option value="Sulafat">Sulafat — smooth female</option>
+            <option value="Vindemiatrix">Vindemiatrix — professional female</option>
+            <option value="Zephyr">Zephyr — airy female</option>
+          </optgroup>
+          <optgroup label="Male voices">
+            <option value="Achird">Achird — clear male</option>
+            <option value="Algenib">Algenib — strong male</option>
+            <option value="Algieba">Algieba — rich male</option>
+            <option value="Alnilam">Alnilam — deep male</option>
+            <option value="Charon">Charon — calm, deep</option>
+            <option value="Enceladus">Enceladus — expressive male</option>
+            <option value="Fenrir">Fenrir — confident male</option>
+            <option value="Iapetus">Iapetus — steady male</option>
+            <option value="Orus">Orus — warm male</option>
+            <option value="Perseus">Perseus — clear male</option>
+            <option value="Puck">Puck — bright, energetic</option>
+            <option value="Rasalgethi">Rasalgethi — bold male</option>
+            <option value="Sadachbia">Sadachbia — natural male</option>
+            <option value="Sadaltager">Sadaltager — smooth male</option>
+            <option value="Schedar">Schedar — professional male</option>
+            <option value="Umbriel">Umbriel — deep, calm</option>
+            <option value="Zubenelgenubi">Zubenelgenubi — resonant male</option>
+          </optgroup>
+        </select>
+      </div>
+    </div>
+    <div class="group-actions">
+      <button class="btn btn-green" onclick="saveGroup('google')">💾 Save Gemini Keys</button>
+      <span class="group-save-status" id="gss-google"></span>
+    </div>
+  </div>
+
+  <!-- ── Group 3: VoiceLink SIP ── -->
+  <div class="card settings-group" id="grp-voicelink">
+    <div class="settings-group-title">
+      3. VoiceLink SIP Trunk <span class="group-status gs-warn" id="gs-voicelink">Not configured</span>
+    </div>
+    <p style="font-size:.75rem;color:var(--text2);margin-bottom:.75rem">
+      Get your SIP credentials from <a href="https://app.voicelink.co.in/reseller/dids" target="_blank" style="color:var(--accent)">app.voicelink.co.in → Reseller → DIDs</a>
+    </p>
+    <div class="field-row">
+      <div>
+        <label for="s-v-domain">SIP Domain</label>
+        <input type="text" id="s-v-domain" placeholder="your-domain.sip.voicelink.co.in" />
+        <div class="field-note">Account → SIP Settings in VoiceLink panel</div>
+      </div>
+      <div>
+        <label for="s-v-user">SIP Username</label>
+        <input type="text" id="s-v-user" placeholder="your_sip_username" />
+      </div>
+      <div>
+        <label for="s-v-pass">SIP Password</label>
+        <div class="field-wrap">
+          <input type="password" id="s-v-pass" placeholder="Leave blank to keep saved" autocomplete="new-password" />
+          <button type="button" class="eye-btn" onclick="toggleEye('s-v-pass',this)">👁</button>
+        </div>
+        <div id="cfg-v-pass" class="not-set-badge">Not configured</div>
+      </div>
+    </div>
+    <div class="field-row">
+      <div>
+        <label for="s-v-num">DID 1 (Outbound Number)</label>
+        <input type="text" id="s-v-num" placeholder="+919XXXXXXXXX" />
+        <div class="field-note">Primary DID in E.164 format</div>
+      </div>
+      <div>
+        <label for="s-v-did2">DID 2 (optional)</label>
+        <input type="text" id="s-v-did2" placeholder="+919XXXXXXXXX" />
+      </div>
+      <div>
+        <label for="s-v-did3">DID 3 (optional)</label>
+        <input type="text" id="s-v-did3" placeholder="+919XXXXXXXXX" />
+      </div>
+      <div>
+        <label for="s-v-did4">DID 4 (optional)</label>
+        <input type="text" id="s-v-did4" placeholder="+919XXXXXXXXX" />
+      </div>
+    </div>
+    <div class="field-row">
+      <div>
+        <label for="s-v-trunk">Outbound Trunk ID</label>
+        <input type="text" id="s-v-trunk" placeholder="ST_xxxxxxxxxxxxxxxxxxxx" readonly style="background:rgba(255,255,255,0.04);color:var(--muted);" />
+        <div class="field-note">Auto-filled when you click "Create SIP Trunk" below</div>
+      </div>
+      <div>
+        <label for="s-v-inbound-trunk">Inbound Trunk ID</label>
+        <input type="text" id="s-v-inbound-trunk" placeholder="ST_xxxxxxxxxxxxxxxxxxxx" readonly style="background:rgba(255,255,255,0.04);color:var(--muted);" />
+        <div class="field-note">Auto-filled when you click "Create Inbound Trunk"</div>
+      </div>
+      <div>
+        <label for="s-v-sip-endpoint">LiveKit SIP Endpoint</label>
+        <input type="text" id="s-v-sip-endpoint" placeholder="your-project-id.sip.livekit.cloud" />
+        <div class="field-note">LiveKit Cloud → Project Settings → SIP URI (no sip: prefix). Set this as destination in VoiceLink DID settings.</div>
+      </div>
+      <div>
+        <label for="s-v-transfer">Default Transfer Number</label>
+        <input type="text" id="s-v-transfer" placeholder="+919999999999" />
+        <div class="field-note">Where to transfer when lead asks for a human</div>
+      </div>
+    </div>
+    <div class="group-actions">
+      <button class="btn btn-green" onclick="saveGroup('voicelink')">💾 Save VoiceLink Config</button>
+      <button class="btn" id="btn-create-trunk" onclick="createSipTrunk()" style="background:var(--accent);color:#000;font-weight:700;">⚡ Create Outbound Trunk</button>
+      <button class="btn" id="btn-create-inbound-trunk" onclick="createInboundTrunk()" style="background:#7c3aed;color:#fff;font-weight:700;">📥 Create Inbound Trunk</button>
+      <button class="btn" id="btn-create-dispatch-rule" onclick="createDispatchRule()" style="background:#0891b2;color:#fff;font-weight:700;">🔀 Create Dispatch Rule</button>
+      <span class="group-save-status" id="gss-voicelink"></span>
+    </div>
+  </div>
+
+  <!-- ── Group 4: Twilio SMS (optional) ── -->
+  <div class="card settings-group" id="grp-twilio">
+    <div class="settings-group-title">
+      4. Twilio SMS <span class="group-status" style="background:#33333318;color:#888;border:1px solid #333;font-size:.68rem;padding:2px 7px;border-radius:20px" id="gs-twilio">Optional</span>
+    </div>
+    <p style="font-size:.75rem;color:var(--text2);margin-bottom:.75rem">
+      Leave all blank to silently skip SMS confirmations after bookings.
+      Get keys at <code>console.twilio.com</code>.
+    </p>
+    <div class="field-row">
+      <div>
+        <label for="s-tw-sid">Account SID</label>
+        <input type="text" id="s-tw-sid" placeholder="ACxxxxxxxxxxxxxxxx" />
+        <div id="cfg-tw-sid" class="not-set-badge">Not configured</div>
+      </div>
+      <div>
+        <label for="s-tw-token">Auth Token</label>
+        <div class="field-wrap">
+          <input type="password" id="s-tw-token" placeholder="Leave blank to keep saved" autocomplete="new-password" />
+          <button type="button" class="eye-btn" onclick="toggleEye('s-tw-token',this)">👁</button>
+        </div>
+        <div id="cfg-tw-token" class="not-set-badge">Not configured</div>
+      </div>
+      <div>
+        <label for="s-tw-from">From Number</label>
+        <input type="text" id="s-tw-from" placeholder="+12015551234" />
+        <div class="field-note">Your Twilio phone number</div>
+      </div>
+    </div>
+    <div class="group-actions">
+      <button class="btn btn-green" onclick="saveGroup('twilio')">💾 Save Twilio Config</button>
+      <span class="group-save-status" id="gss-twilio"></span>
+    </div>
+  </div>
+
+  <!-- ── Group 5: S3 / Supabase Storage ── -->
+  <div class="card settings-group" id="grp-s3">
+    <div class="settings-group-title">
+      5. Storage — S3 / Supabase
+      <span class="group-status" style="background:#33333318;color:#888;border:1px solid #333;font-size:.68rem;padding:2px 7px;border-radius:20px" id="gs-s3">Optional — Call Recordings</span>
+    </div>
+    <p style="font-size:.75rem;color:var(--text2);margin-bottom:.75rem">
+      Configure to automatically record and store every call. Works with <strong>AWS S3</strong> or
+      <strong>Supabase Storage</strong> (S3-compatible).<br>
+      For Supabase: create a public bucket, then use endpoint <code>https://&lt;ref&gt;.supabase.co/storage/v1/s3</code>.<br>
+      Recordings require <strong>LiveKit Egress</strong> to be enabled on your LiveKit project.
+    </p>
+    <div class="field-row">
+      <div>
+        <label for="s-s3-key">Access Key ID</label>
+        <input type="text" id="s-s3-key" placeholder="AKIAIOSFODNN7EXAMPLE" />
+        <div id="cfg-s3-key" class="not-set-badge">Not configured</div>
+      </div>
+      <div>
+        <label for="s-s3-secret">Secret Access Key</label>
+        <div class="field-wrap">
+          <input type="password" id="s-s3-secret" placeholder="Leave blank to keep saved" autocomplete="new-password" />
+          <button type="button" class="eye-btn" onclick="toggleEye('s-s3-secret',this)">👁</button>
+        </div>
+        <div id="cfg-s3-secret" class="not-set-badge">Not configured</div>
+      </div>
+      <div>
+        <label for="s-s3-bucket">Bucket Name</label>
+        <input type="text" id="s-s3-bucket" placeholder="my-recordings-bucket" />
+      </div>
+      <div>
+        <label for="s-s3-region">Region</label>
+        <input type="text" id="s-s3-region" placeholder="us-east-1" />
+      </div>
+      <div>
+        <label for="s-s3-endpoint">Custom Endpoint</label>
+        <input type="text" id="s-s3-endpoint" placeholder="https://xxx.supabase.co/storage/v1/s3" />
+        <div class="field-note">Leave blank for AWS S3. Required for Supabase Storage.</div>
+      </div>
+    </div>
+    <div class="group-actions">
+      <button class="btn btn-green" onclick="saveGroup('s3')">💾 Save Storage Config</button>
+      <span class="group-save-status" id="gss-s3"></span>
+    </div>
+  </div>
+
+  <!-- ── Group 6: Cal.com ── -->
+  <div class="card settings-group" id="grp-calcom">
+    <div class="settings-group-title">
+      6. Cal.com Integration <span class="group-status" style="background:#33333318;color:#888;border:1px solid #333;font-size:.68rem;padding:2px 7px;border-radius:20px" id="gs-calcom">Optional</span>
+    </div>
+    <p style="font-size:.75rem;color:var(--text2);margin-bottom:.75rem">
+      Enables the AI to book and cancel appointments directly in your Cal.com calendar.<br>
+      Get your API key at <code>cal.com/settings/developer/api-keys</code>.
+      The Event Type ID is the number in your event URL: <code>cal.com/your-name/<strong>123</strong></code>.
+    </p>
+    <div class="field-row">
+      <div>
+        <label for="s-cal-key">Cal.com API Key <span style="color:var(--danger)">*</span></label>
+        <div class="field-wrap">
+          <input type="password" id="s-cal-key" placeholder="cal_live_..." autocomplete="new-password" />
+          <button type="button" class="eye-btn" onclick="toggleEye('s-cal-key',this)">👁</button>
+        </div>
+        <div id="cfg-cal-key" class="not-set-badge">Not configured</div>
+      </div>
+      <div>
+        <label for="s-cal-event">Event Type ID</label>
+        <input type="text" id="s-cal-event" placeholder="123456" />
+        <div class="field-note">From your Cal.com event URL</div>
+      </div>
+      <div>
+        <label for="s-cal-tz">Timezone</label>
+        <input type="text" id="s-cal-tz" placeholder="Asia/Kolkata" />
+      </div>
+    </div>
+    <div class="group-actions">
+      <button class="btn btn-green" onclick="saveGroup('calcom')">💾 Save Cal.com Config</button>
+      <span class="group-save-status" id="gss-calcom"></span>
+    </div>
+  </div>
+
+  <!-- ── Group 7: Tool Toggles ── -->
+  <div class="card settings-group" id="grp-tools">
+    <div class="settings-group-title">
+      7. Agent Tools — Enable / Disable
+    </div>
+    <p style="font-size:.75rem;color:var(--text2);margin-bottom:.75rem">
+      Toggle which capabilities the AI agent has during calls. Changes take effect on the next call.
+    </p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:.5rem;margin-bottom:.75rem">
+      <label style="display:flex;align-items:center;gap:.5rem;font-size:.8rem;cursor:pointer;padding:.4rem .6rem;border:1px solid var(--border);border-radius:5px">
+        <input type="checkbox" id="tool-check_availability" checked style="accent-color:var(--accent)"> Check Availability
+      </label>
+      <label style="display:flex;align-items:center;gap:.5rem;font-size:.8rem;cursor:pointer;padding:.4rem .6rem;border:1px solid var(--border);border-radius:5px">
+        <input type="checkbox" id="tool-book_appointment" checked style="accent-color:var(--accent)"> Book Appointment (DB)
+      </label>
+      <label style="display:flex;align-items:center;gap:.5rem;font-size:.8rem;cursor:pointer;padding:.4rem .6rem;border:1px solid var(--border);border-radius:5px">
+        <input type="checkbox" id="tool-end_call" checked style="accent-color:var(--accent)"> End Call
+      </label>
+      <label style="display:flex;align-items:center;gap:.5rem;font-size:.8rem;cursor:pointer;padding:.4rem .6rem;border:1px solid var(--border);border-radius:5px">
+        <input type="checkbox" id="tool-transfer_to_human" checked style="accent-color:var(--accent)"> Transfer to Human
+      </label>
+      <label style="display:flex;align-items:center;gap:.5rem;font-size:.8rem;cursor:pointer;padding:.4rem .6rem;border:1px solid var(--border);border-radius:5px">
+        <input type="checkbox" id="tool-send_sms_confirmation" checked style="accent-color:var(--accent)"> Send SMS Confirmation
+      </label>
+      <label style="display:flex;align-items:center;gap:.5rem;font-size:.8rem;cursor:pointer;padding:.4rem .6rem;border:1px solid var(--border);border-radius:5px">
+        <input type="checkbox" id="tool-lookup_contact" checked style="accent-color:var(--accent)"> Lookup Contact (CRM)
+      </label>
+      <label style="display:flex;align-items:center;gap:.5rem;font-size:.8rem;cursor:pointer;padding:.4rem .6rem;border:1px solid var(--border);border-radius:5px">
+        <input type="checkbox" id="tool-remember_details" checked style="accent-color:var(--accent)"> Remember Key Details
+      </label>
+      <label style="display:flex;align-items:center;gap:.5rem;font-size:.8rem;cursor:pointer;padding:.4rem .6rem;border:1px solid var(--border);border-radius:5px">
+        <input type="checkbox" id="tool-book_calcom" checked style="accent-color:var(--accent)"> Book Cal.com Appointment
+      </label>
+      <label style="display:flex;align-items:center;gap:.5rem;font-size:.8rem;cursor:pointer;padding:.4rem .6rem;border:1px solid var(--border);border-radius:5px">
+        <input type="checkbox" id="tool-cancel_calcom" checked style="accent-color:var(--accent)"> Cancel Cal.com Appointment
+      </label>
+    </div>
+    <div class="group-actions">
+      <button class="btn btn-green" onclick="saveToolToggles()">💾 Save Tool Settings</button>
+      <span class="group-save-status" id="gss-tools"></span>
+    </div>
+  </div>
+
+</div><!-- end tab-settings -->
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- ══ LOGS (Live Log Viewer) ════════════════════════════ -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div class="tab-panel" id="tab-errors">
+  <div class="sh">📋 Live Logs <span style="color:var(--accent);font-size:.65rem" id="logs-refresh-label">● auto-refresh 5s</span></div>
+  <div class="card">
+
+    <!-- Top controls row -->
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.75rem;flex-wrap:wrap;gap:.6rem">
+
+      <!-- Level + Source filters -->
+      <div style="display:flex;flex-direction:column;gap:.5rem">
+        <div class="log-filters" id="log-level-filters">
+          <span style="font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em">Level:</span>
+          <button class="filter-btn active-all" data-level="all">All</button>
+          <button class="filter-btn" data-level="info">Info</button>
+          <button class="filter-btn" data-level="warning">Warning</button>
+          <button class="filter-btn" data-level="error">Error</button>
+        </div>
+        <div class="log-filters" id="log-source-filters">
+          <span style="font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em">Source:</span>
+          <button class="filter-btn active-all" data-source="all">All Sources</button>
+          <button class="filter-btn" data-source="agent">Agent</button>
+          <button class="filter-btn" data-source="server">Server</button>
+        </div>
+      </div>
+
+      <!-- Right-side action buttons -->
+      <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
+        <div class="refresh-pill">
+          <span class="refresh-dot" id="logs-refresh-dot"></span>
+          <span id="logs-refresh-status">Live</span>
+        </div>
+        <button class="btn btn-ghost" id="logs-pause-btn" style="font-size:.75rem;padding:.3rem .65rem">⏸ Pause</button>
+        <button class="btn btn-ghost" onclick="loadLogs()" style="font-size:.75rem;padding:.3rem .65rem">↻ Refresh</button>
+        <button class="btn btn-red" id="clear-errors-btn">🗑 Clear All</button>
+      </div>
+    </div>
+
+    <!-- Log count indicator -->
+    <div style="font-size:.7rem;color:var(--muted);margin-bottom:.5rem">
+      Showing <span id="logs-count">0</span> entries (last 200) — click a row to expand detail
+    </div>
+
+    <!-- Table -->
+    <div class="tw">
+      <table id="logs-table">
+        <thead>
+          <tr>
+            <th style="width:130px">Time</th>
+            <th style="width:60px">Level</th>
+            <th style="width:70px">Source</th>
+            <th>Message</th>
+            <th style="width:200px">Detail</th>
+          </tr>
+        </thead>
+        <tbody id="errors-tbody"><tr><td colspan="5" class="empty">Loading...</td></tr></tbody>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ LIVE LINK ══ -->
+<div class="tab-panel" id="tab-livelink">
+  <div class="sh">🔗 Live Link Generator</div>
+  <div class="card">
+    <h3 style="color:var(--accent);margin-bottom:.5rem;font-family:var(--mono)">Share a Talk-to-Agent Link</h3>
+    <p style="font-size:.82rem;color:var(--text2);line-height:1.6;margin-bottom:1.5rem">
+      Anyone who opens this URL can click "Talk to Agent" in their browser and have a live voice conversation with your AI — no phone needed.
+      Send it over email, WhatsApp, Slack, or paste it anywhere.
+      The link works as long as this server is running.
+    </p>
+    <div style="display:flex;gap:.5rem;align-items:center;margin-bottom:1rem">
+      <input id="llink-input" readonly value="" style="flex:1;background:#0a0a0a;border:1px solid var(--border);color:var(--accent2);padding:.7rem 1rem;border-radius:6px;font-family:var(--mono);font-size:.85rem">
+      <button id="llink-copy" onclick="copyLiveLink()" style="background:var(--accent);color:#000;border:none;padding:.7rem 1.2rem;border-radius:6px;font-weight:600;cursor:pointer;font-family:var(--mono);font-size:.8rem">COPY</button>
+      <button onclick="openLiveLink()" style="background:transparent;color:var(--accent2);border:1px solid var(--accent2);padding:.7rem 1.2rem;border-radius:6px;font-weight:600;cursor:pointer;font-family:var(--mono);font-size:.8rem">OPEN</button>
+    </div>
+    <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.5rem">
+      <button onclick="shareEmail()" style="background:#222;color:var(--text);border:1px solid var(--border);padding:.55rem 1rem;border-radius:6px;cursor:pointer;font-size:.78rem">✉ Share via Email</button>
+      <button onclick="shareWhatsApp()" style="background:#222;color:var(--text);border:1px solid var(--border);padding:.55rem 1rem;border-radius:6px;cursor:pointer;font-size:.78rem">💬 Share via WhatsApp</button>
+    </div>
+    <div id="llink-status" style="font-size:.78rem;color:var(--muted);font-family:var(--mono);min-height:1.2em"></div>
+    <div style="margin-top:1.5rem;padding:1rem;background:#0a0a0a;border:1px solid var(--border);border-radius:6px">
+      <div style="font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.5rem">How it works</div>
+      <ol style="font-size:.78rem;color:var(--text2);line-height:1.8;padding-left:1.2rem">
+        <li>Share the link with anyone — clients, friends, prospects.</li>
+        <li>They open it in any modern browser (Chrome, Safari, Edge).</li>
+        <li>They click "Talk to Agent" and grant microphone access.</li>
+        <li>They have a real voice conversation with your Gemini-powered agent.</li>
+        <li>Every conversation is logged in Call Logs and Appointments just like a phone call.</li>
+      </ol>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SETUP ══ -->
+<div class="tab-panel" id="tab-setup">
+  <div class="sh">🔧 Setup Guide</div>
+  <div class="card">
+    <h3 style="color:var(--accent);margin-bottom:1rem;font-family:var(--mono)">Quickstart</h3>
+    <div style="font-size:.8rem;color:var(--text2);line-height:2;font-family:var(--mono)">
+      <div style="padding:.3rem 0;border-bottom:1px solid #1a1a1a"><span style="color:var(--accent)">Step 1</span> &nbsp;<code>pip install -r requirements.txt</code></div>
+      <div style="padding:.3rem 0;border-bottom:1px solid #1a1a1a"><span style="color:var(--accent)">Step 2</span> &nbsp;Enter all API keys in the <strong>⚙️ Settings</strong> tab above — no .env needed</div>
+      <div style="padding:.3rem 0;border-bottom:1px solid #1a1a1a"><span style="color:var(--accent)">Step 3</span> &nbsp;Click ⚡ Create Outbound Trunk → 📥 Create Inbound Trunk → 🔀 Create Dispatch Rule in Settings (one-time)</div>
+      <div style="padding:.3rem 0;border-bottom:1px solid #1a1a1a"><span style="color:var(--accent)">Step 4</span> &nbsp;<code>python -c "from db import init_db; init_db()"</code></div>
+      <div style="padding:.3rem 0;border-bottom:1px solid #1a1a1a"><span style="color:var(--accent)">Step 5</span> &nbsp;Terminal 1: <code>python agent.py start</code></div>
+      <div style="padding:.3rem 0;border-bottom:1px solid #1a1a1a"><span style="color:var(--accent)">Step 6</span> &nbsp;Terminal 2: <code>uvicorn server:app --host 0.0.0.0 --port 8000 --reload</code></div>
+      <div style="padding:.3rem 0"><span style="color:var(--accent)">Step 7</span> &nbsp;Open <code>http://localhost:8000</code> and use Single Call to test 🎉</div>
+    </div>
+    <hr class="divider" />
+    <h3 style="color:var(--accent);margin-bottom:.75rem;font-family:var(--mono)">Cost Breakdown</h3>
+    <table style="font-size:.78rem">
+      <thead><tr><th>Service</th><th>Cost / min</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td>VoiceLink SIP</td><td style="color:var(--warn)">≈ ₹1.00</td><td>Fixed telephony</td></tr>
+        <tr><td>Gemini Live</td><td style="color:var(--accent)">≈ ₹0.03</td><td>Free tier up to quota</td></tr>
+        <tr><td>LiveKit Cloud</td><td style="color:var(--accent)">≈ ₹0.17</td><td>Free tier available</td></tr>
+        <tr style="font-weight:700"><td>Total</td><td style="color:var(--accent)">≈ ₹1.20</td><td>✅ Under ₹1.50 target</td></tr>
+      </tbody>
+    </table>
+    <hr class="divider" />
+    <h3 style="color:var(--accent);margin-bottom:.75rem;font-family:var(--mono)">Troubleshooting</h3>
+    <table style="font-size:.78rem">
+      <thead><tr><th>Error</th><th>Fix</th></tr></thead>
+      <tbody>
+        <tr><td>Max Auth Retry (500)</td><td>Run <code>python setup_trunk.py</code></td></tr>
+        <tr><td>LiveKit credentials not configured</td><td>Add keys in ⚙️ Settings tab</td></tr>
+        <tr><td>No module livekit.plugins.google</td><td><code>pip install livekit-plugins-google&gt;=1.0</code></td></tr>
+        <tr><td>Transfer timeout (408)</td><td>Enable "Call Transfer" in VoiceLink panel</td></tr>
+        <tr><td>See more errors</td><td>Check the 🚨 Errors tab</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+</main>
+<div id="toasts"></div>
+
+<script>
+// ══════════════════════════════════════════════════════
+// Utilities
+// ══════════════════════════════════════════════════════
+
+const $ = id => document.getElementById(id);
+const api     = (path, opts) => fetch(path, opts).then(r => r.json());
+const apiPost = (path, body) => fetch(path, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
+const apiDel  = path => fetch(path, {method:'DELETE'});
+
+function toast(msg, type='ok'){
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `<span>${type==='ok'?'✅':'❌'}</span><span>${msg}</span>`;
+  $('toasts').appendChild(el);
+  setTimeout(() => el.remove(), 4500);
+}
+function showErr(id, msg){ const e=$(id); e.textContent=msg; e.style.display='block'; setTimeout(()=>e.style.display='none',7000) }
+function badge(val){ const c=val?val.toLowerCase().replace(/\s/g,'_'):'error'; return `<span class="badge b-${c}">${val||'—'}</span>` }
+function fmtTs(iso){ return iso?iso.replace('T',' ').slice(0,16):'—' }
+
+// ══ Tab switching ══
+function switchTab(name){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active', t.dataset.tab===name));
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.toggle('active', p.id===`tab-${name}`));
+  if(name==='prompt')      loadPrompt();
+  if(name==='logs')        loadCalls();
+  if(name==='appointments') loadAppointments();
+  if(name==='stats')       loadStats();
+  if(name==='settings')    loadSettings();
+  if(name==='errors')      loadLogs();
+  if(name==='crm')         loadCRM();
+  if(name==='campaigns')   loadCampaigns();
+  if(name==='agents')      loadAgentProfiles();
+  if(name==='livelink')    loadLiveLink();
+}
+
+// ══ Live Link ══
+async function loadLiveLink(){
+  const inp = document.getElementById('llink-input');
+  const status = document.getElementById('llink-status');
+  if(inp.value) return; // already loaded
+  try {
+    const r = await fetch('/api/public-url');
+    const j = await r.json();
+    const url = `${j.url}/talk`;
+    inp.value = url;
+    status.textContent = j.url.includes('trycloudflare') || j.url.startsWith('https://') && !j.url.includes('localhost')
+      ? '✓ Public URL active — share this anywhere'
+      : '⚠ Local only — start cloudflared tunnel for public access';
+  } catch(e){
+    status.textContent = 'Error loading URL: ' + e.message;
+  }
+}
+function copyLiveLink(){
+  const inp = document.getElementById('llink-input');
+  inp.select();
+  navigator.clipboard.writeText(inp.value).then(()=>{
+    const btn = document.getElementById('llink-copy');
+    const old = btn.textContent; btn.textContent='COPIED ✓';
+    setTimeout(()=>btn.textContent=old, 1500);
+  });
+}
+function openLiveLink(){
+  const url = document.getElementById('llink-input').value;
+  if(url) window.open(url, '_blank');
+}
+function shareEmail(){
+  const url = document.getElementById('llink-input').value;
+  const subject = encodeURIComponent('Try our AI voice agent');
+  const body = encodeURIComponent(`Hey,\n\nGive our AI agent a try, just click the link below and start talking:\n\n${url}\n\nNo phone call needed — works right in your browser.`);
+  window.location.href = `mailto:?subject=${subject}&body=${body}`;
+}
+function shareWhatsApp(){
+  const url = document.getElementById('llink-input').value;
+  const msg = encodeURIComponent(`Try our AI voice agent — click and talk: ${url}`);
+  window.open(`https://wa.me/?text=${msg}`, '_blank');
+}
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>switchTab(t.dataset.tab)));
+
+// ══ Clock ══
+setInterval(()=>{ $('hdr-clock').textContent=new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit'}) },1000);
+
+// ══ Eye toggle (show/hide password) ══
+window.toggleEye = function(id, btn){
+  const inp = $(id);
+  if(inp.type==='password'){ inp.type='text'; btn.textContent='🙈' }
+  else { inp.type='password'; btn.textContent='👁' }
+}
+
+// ══════════════════════════════════════════════════════
+// Stats + Charts
+// ══════════════════════════════════════════════════════
+const _charts = {};
+
+function _mkChart(id, type, data, options={}){
+  const canvas = document.getElementById(id);
+  if(!canvas) return;
+  if(_charts[id]) _charts[id].destroy();
+  _charts[id] = new Chart(canvas, {
+    type, data,
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ labels:{ color:'#aaa', font:{size:11} } } },
+      scales: type==='bar'||type==='line' ? {
+        x:{ ticks:{color:'#5a5a5a',font:{size:10}}, grid:{color:'#1e1e1e'} },
+        y:{ ticks:{color:'#5a5a5a',font:{size:10}}, grid:{color:'#1e1e1e'}, beginAtZero:true }
+      } : {},
+      ...options
+    }
+  });
+}
+
+async function loadStats(){
+  try{
+    const d = await api('/api/stats');
+    $('s-total').textContent  = d.total_calls??0;
+    $('s-booked').textContent = d.booked??0;
+    $('s-ni').textContent     = d.not_interested??0;
+    $('s-rate').textContent   = (d.booking_rate_percent??0)+'%';
+    $('s-dur').textContent    = d.avg_duration_seconds??0;
+    _renderCharts(d);
+  }catch(e){}
+  await loadLiveConfig();
+}
+
+function _renderCharts(d){
+  // 1. Outcomes donut
+  const outcomes = d.outcomes || {};
+  const outLabels = Object.keys(outcomes).length ? Object.keys(outcomes) : ['booked','not_interested','no_answer','other'];
+  const outVals   = outLabels.map(k=>outcomes[k]||0);
+  const palette   = ['#00ff88','#ff4d4d','#ffaa00','#00ccff','#cc88ff','#ff88cc'];
+  _mkChart('chart-outcomes','doughnut',{
+    labels: outLabels.map(l=>l.replace(/_/g,' ')),
+    datasets:[{ data:outVals, backgroundColor:palette, borderWidth:0, hoverOffset:6 }]
+  },{ plugins:{ legend:{ position:'right', labels:{color:'#aaa',font:{size:10}, boxWidth:12} } } });
+
+  // 2. Timeline line chart
+  const tl = d.timeline || [];
+  _mkChart('chart-timeline','line',{
+    labels: tl.map(p=>p.date||''),
+    datasets:[{
+      label:'Calls',
+      data: tl.map(p=>p.count||0),
+      borderColor:'#00ccff', backgroundColor:'#00ccff18',
+      fill:true, tension:.4, pointRadius:3, pointBackgroundColor:'#00ccff'
+    }]
+  });
+
+  // 3. Avg duration by outcome bar
+  const dur = d.duration_by_outcome || {};
+  const durLabels = Object.keys(dur).length ? Object.keys(dur) : [];
+  _mkChart('chart-duration','bar',{
+    labels: durLabels.map(l=>l.replace(/_/g,' ')),
+    datasets:[{
+      label:'Avg seconds',
+      data: durLabels.map(k=>Math.round(dur[k]||0)),
+      backgroundColor:'#00ff8866', borderColor:'#00ff88', borderWidth:1, borderRadius:4
+    }]
+  });
+}
+
+async function loadLiveConfig(){
+  try{
+    const [cfg, promptData] = await Promise.all([api('/api/settings'), api('/api/prompt')]);
+    const v = k => (cfg[k]?.value) || '—';
+    const c = k => cfg[k]?.configured;
+
+    // Model — strip long suffixes for readability
+    const model = v('GEMINI_MODEL');
+    $('lc-model').textContent = model==='—'?'—':model.replace('gemini-','').replace('-preview','★').replace('-001','');
+    $('lc-model').title = model;
+
+    $('lc-voice').textContent  = v('GEMINI_TTS_VOICE');
+    $('lc-fwd').textContent    = v('DEFAULT_TRANSFER_NUMBER');
+    $('lc-did').textContent    = v('VOICELINK_OUTBOUND_NUMBER');
+    $('lc-trunk').textContent  = v('OUTBOUND_TRUNK_ID') !== '—' ? '✓ configured' : '⚠ not set';
+    $('lc-trunk').style.color  = v('OUTBOUND_TRUNK_ID') !== '—' ? 'var(--accent)' : 'var(--warn)';
+    $('lc-realtime').textContent = v('USE_GEMINI_REALTIME')==='false' ? 'Pipeline (Deepgram)' : 'Gemini Live';
+    $('lc-calcom').textContent = c('CALCOM_API_KEY') ? '✓ connected' : 'not configured';
+    $('lc-calcom').style.color = c('CALCOM_API_KEY') ? 'var(--accent)' : 'var(--muted)';
+    $('lc-prompt').textContent = promptData.is_custom ? 'Custom ✓' : 'Default';
+    $('lc-prompt').style.color = promptData.is_custom ? 'var(--accent)' : 'var(--muted)';
+  }catch(e){}
+}
+
+// ══════════════════════════════════════════════════════
+// Single Call
+// ══════════════════════════════════════════════════════
+$('sc-chk').addEventListener('change', e => $('sc-area').classList.toggle('visible', e.target.checked));
+
+$('call-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const btn=$('call-btn'), lbl=$('call-lbl');
+  btn.disabled=true; lbl.innerHTML='<span class="spin"></span> Calling...';
+  const override = $('sc-chk').checked ? $('sc-prompt').value.trim() : null;
+  const body = {
+    phone:             $('f-phone').value.trim(),
+    lead_name:         $('f-lead').value.trim()||'there',
+    business_name:     $('f-biz').value.trim()||'our company',
+    service_type:      $('f-svc').value.trim()||'our service',
+    system_prompt:     override||null,
+    agent_profile_id:  $('f-agent-profile').value||null,
+  };
+  try{
+    const r = await apiPost('/api/call', body);
+    const d = await r.json();
+    if(!r.ok) throw new Error(d.detail||r.statusText);
+    toast(`Call dispatched to ${body.phone}`);
+    loadStats(); setTimeout(loadCalls, 3000);
+  }catch(err){ showErr('call-err', err.message); toast(err.message,'err') }
+  finally{ btn.disabled=false; lbl.textContent='▶ Start Call' }
+});
+
+// ══════════════════════════════════════════════════════
+// Batch Call
+// ══════════════════════════════════════════════════════
+$('bc-chk').addEventListener('change', e => $('bc-area').classList.toggle('visible', e.target.checked));
+
+let batchRows = [];
+$('bc-parse').addEventListener('click', async () => {
+  const file = $('bc-file').files[0];
+  if(!file){ showErr('bc-err','Select a CSV file first.'); return }
+  const lines = (await file.text()).trim().split('\n').filter(l=>l.trim());
+  if(lines.length<2){ showErr('bc-err','CSV needs header + at least 1 data row.'); return }
+  const hdrs = lines[0].split(',').map(h=>h.trim().toLowerCase().replace(/"/g,''));
+  const c = k => hdrs.indexOf(k);
+  const pc=c('phone'),lc=c('lead_name'),bc=c('business_name'),sc=c('service_type');
+  if(pc===-1){ showErr('bc-err','"phone" column not found.'); return }
+  batchRows = lines.slice(1).map((line,i)=>{
+    const cols=line.split(',').map(x=>x.trim().replace(/^"|"$/g,''));
+    return{idx:i+1,phone:cols[pc]||'',lead_name:lc!==-1?cols[lc]:'there',
+      business_name:bc!==-1?cols[bc]:'our company',service_type:sc!==-1?cols[sc]:'our service'}
+  }).filter(r=>r.phone.startsWith('+'));
+  if(!batchRows.length){ showErr('bc-err','No valid rows (phone must start with "+").'); return }
+  $('bc-count').textContent = batchRows.length;
+  $('bc-tbody').innerHTML = batchRows.slice(0,10).map(r=>
+    `<tr><td>${r.idx}</td><td>${r.phone}</td><td>${r.lead_name}</td><td>${r.business_name}</td><td>${r.service_type}</td></tr>`
+  ).join('') + (batchRows.length>10?`<tr><td colspan="5" class="empty">… and ${batchRows.length-10} more</td></tr>`:'');
+  $('bc-preview').style.display='block';
+  $('bc-start').disabled=false;
+  toast(`Parsed ${batchRows.length} rows — ready.`);
+});
+
+$('bc-start').addEventListener('click', async () => {
+  if(!batchRows.length) return;
+  const delay = Math.max(1,parseInt($('bc-delay').value)||3)*1000;
+  const bPrompt = $('bc-chk').checked ? $('bc-prompt').value.trim() : null;
+  const bProfile = $('bc-agent-profile').value || null;
+  const btn=$('bc-start'), wrap=$('bc-pw'), bar=$('bc-pb'), lbl=$('bc-pl');
+  btn.disabled=true; $('bc-parse').disabled=true;
+  wrap.style.display='block'; lbl.style.display='block';
+  let ok=0,fail=0;
+  for(let i=0;i<batchRows.length;i++){
+    const row=batchRows[i];
+    bar.style.width=Math.round(((i+1)/batchRows.length)*100)+'%';
+    lbl.textContent=`Dispatching ${i+1}/${batchRows.length} → ${row.phone}`;
+    try{ const r=await apiPost('/api/call',{...row,system_prompt:bPrompt||null,agent_profile_id:bProfile}); if(r.ok)ok++;else fail++ }
+    catch(_){fail++}
+    if(i<batchRows.length-1) await new Promise(res=>setTimeout(res,delay));
+  }
+  btn.disabled=false; $('bc-parse').disabled=false;
+  lbl.textContent=`Done — ${ok} dispatched, ${fail} failed.`;
+  bar.style.width='100%';
+  toast(`Batch done: ${ok} dispatched, ${fail} failed.`, ok>0?'ok':'err');
+  loadStats(); setTimeout(loadCalls,3000);
+});
+
+// ══════════════════════════════════════════════════════
+// AI Prompt
+// ══════════════════════════════════════════════════════
+async function loadPrompt(){
+  $('prompt-textarea').value='Loading...';
+  try{
+    const d = await api('/api/prompt');
+    $('prompt-textarea').value = d.prompt;
+    $('prompt-custom-badge').style.display = d.is_custom?'inline-block':'none';
+    $('prompt-default-label').textContent = d.is_custom?'Using your custom prompt':'Using built-in default';
+    $('prompt-status').textContent='';
+  }catch(e){ $('prompt-textarea').value='Error loading prompt.' }
+}
+$('prompt-save').addEventListener('click', async () => {
+  const val=$('prompt-textarea').value.trim();
+  if(!val){ $('prompt-status').textContent='Cannot be empty.'; $('prompt-status').className='prompt-status err'; return }
+  $('prompt-save').disabled=true;
+  try{
+    const r=await apiPost('/api/prompt',{prompt:val});
+    const d=await r.json(); if(!r.ok) throw new Error(d.detail);
+    $('prompt-custom-badge').style.display='inline-block';
+    $('prompt-default-label').textContent='Using your custom prompt';
+    $('prompt-status').textContent='✓ Saved.'; $('prompt-status').className='prompt-status ok';
+    toast('System prompt saved.');
+  }catch(e){ $('prompt-status').textContent=e.message; $('prompt-status').className='prompt-status err' }
+  finally{ $('prompt-save').disabled=false }
+});
+$('prompt-reset').addEventListener('click', async () => {
+  if(!confirm('Reset to the built-in default Priya prompt?')) return;
+  try{
+    const r=await apiDel('/api/prompt'); const d=await r.json();
+    $('prompt-textarea').value=d.prompt;
+    $('prompt-custom-badge').style.display='none';
+    $('prompt-default-label').textContent='Using built-in default';
+    $('prompt-status').textContent='Reset to default.'; $('prompt-status').className='prompt-status ok';
+    toast('Prompt reset.');
+  }catch(e){ toast(e.message,'err') }
+});
+
+// ══════════════════════════════════════════════════════
+// Appointments
+// ══════════════════════════════════════════════════════
+async function loadAppointments(){
+  const date=$('appt-date').value, tbody=$('appt-tbody');
+  try{
+    const d=await api('/api/appointments'+(date?`?date=${date}`:''));
+    const rows=d.data||[];
+    if(!rows.length){ tbody.innerHTML='<tr><td colspan="8" class="empty">No appointments found.</td></tr>'; return }
+    tbody.innerHTML=rows.map(r=>`
+      <tr id="ar-${r.id}">
+        <td>${r.name||'—'}</td><td>${r.phone||'—'}</td><td>${r.date||'—'}</td><td>${r.time||'—'}</td>
+        <td>${r.service||'—'}</td><td>${badge(r.status)}</td><td>${fmtTs(r.created_at)}</td>
+        <td>${r.status==='booked'?`<button class="btn btn-red" onclick="cancelAppt('${r.id}')">Cancel</button>`:'—'}</td>
+      </tr>`).join('');
+  }catch(e){ tbody.innerHTML='<tr><td colspan="8" class="empty">Failed to load.</td></tr>' }
+}
+window.cancelAppt = async function(id){
+  if(!confirm('Cancel this appointment?')) return;
+  try{
+    const r=await apiDel(`/api/appointments/${id}`); if(!r.ok){const d=await r.json();throw new Error(d.detail)}
+    toast('Appointment cancelled.'); document.getElementById(`ar-${id}`)?.remove(); loadStats();
+  }catch(e){ toast(e.message,'err') }
+};
+$('appt-date').addEventListener('change', loadAppointments);
+$('appt-clear').addEventListener('click', ()=>{ $('appt-date').value=''; loadAppointments() });
+
+// ══════════════════════════════════════════════════════
+// Call Logs
+// ══════════════════════════════════════════════════════
+let callsPage=1;
+async function loadCalls(){
+  const tbody=$('calls-tbody');
+  try{
+    const d=await api(`/api/calls?page=${callsPage}&limit=20`);
+    const rows=d.data||[];
+    if(!rows.length){ tbody.innerHTML='<tr><td colspan="6" class="empty">No calls yet.</td></tr>'; $('calls-next').disabled=true; }
+    else{
+      tbody.innerHTML=rows.map(r=>`<tr>
+        <td>${r.phone_number||'—'}</td><td>${r.lead_name||'—'}</td><td>${badge(r.outcome)}</td>
+        <td class="trunc" title="${r.reason||''}">${r.reason||'—'}</td>
+        <td>${r.duration_seconds!=null?r.duration_seconds+'s':'—'}</td><td>${fmtTs(r.timestamp)}</td>
+      </tr>`).join('');
+      $('calls-next').disabled=rows.length<20;
+    }
+    $('calls-prev').disabled=callsPage<=1;
+    $('calls-pg').textContent=`Page ${callsPage}`;
+  }catch(e){ tbody.innerHTML='<tr><td colspan="6" class="empty">Failed to load.</td></tr>' }
+}
+$('calls-prev').addEventListener('click',()=>{ if(callsPage>1){callsPage--;loadCalls()} });
+$('calls-next').addEventListener('click',()=>{ callsPage++;loadCalls() });
+
+// ══════════════════════════════════════════════════════
+// BYOK Settings
+// ══════════════════════════════════════════════════════
+
+// Map from env key → DOM field ID
+const FIELD_MAP = {
+  LIVEKIT_URL:           's-lk-url',
+  LIVEKIT_API_KEY:       's-lk-key',
+  LIVEKIT_API_SECRET:    's-lk-secret',
+  GOOGLE_API_KEY:        's-g-key',
+  GEMINI_MODEL:          's-g-model',
+  GEMINI_TTS_VOICE:      's-g-voice',
+  VOICELINK_SIP_DOMAIN:      's-v-domain',
+  VOICELINK_USERNAME:        's-v-user',
+  VOICELINK_PASSWORD:        's-v-pass',
+  VOICELINK_OUTBOUND_NUMBER: 's-v-num',
+  VOICELINK_DID_2:           's-v-did2',
+  VOICELINK_DID_3:           's-v-did3',
+  VOICELINK_DID_4:           's-v-did4',
+  OUTBOUND_TRUNK_ID:         's-v-trunk',
+  INBOUND_TRUNK_ID:          's-v-inbound-trunk',
+  LIVEKIT_SIP_ENDPOINT:      's-v-sip-endpoint',
+  DEFAULT_TRANSFER_NUMBER:   's-v-transfer',
+  TWILIO_ACCOUNT_SID:    's-tw-sid',
+  TWILIO_AUTH_TOKEN:     's-tw-token',
+  TWILIO_FROM_NUMBER:    's-tw-from',
+  AWS_ACCESS_KEY_ID:     's-s3-key',
+  AWS_SECRET_ACCESS_KEY: 's-s3-secret',
+  AWS_BUCKET_NAME:       's-s3-bucket',
+  AWS_REGION:            's-s3-region',
+  S3_ENDPOINT:           's-s3-endpoint',
+  CALCOM_API_KEY:        's-cal-key',
+  CALCOM_EVENT_TYPE_ID:  's-cal-event',
+  CALCOM_TIMEZONE:       's-cal-tz',
+};
+
+// Keys whose configured status has a visible badge element
+const CFG_BADGES = {
+  LIVEKIT_API_KEY:      'cfg-lk-key',
+  LIVEKIT_API_SECRET:   'cfg-lk-secret',
+  GOOGLE_API_KEY:       'cfg-g-key',
+  VOICELINK_PASSWORD:   'cfg-v-pass',
+  TWILIO_ACCOUNT_SID:   'cfg-tw-sid',
+  TWILIO_AUTH_TOKEN:    'cfg-tw-token',
+  AWS_ACCESS_KEY_ID:    'cfg-s3-key',
+  AWS_SECRET_ACCESS_KEY:'cfg-s3-secret',
+  CALCOM_API_KEY:       'cfg-cal-key',
+};
+
+// Group → required keys for "all configured" check
+const GROUP_REQUIRED = {
+  livekit: ['LIVEKIT_URL','LIVEKIT_API_KEY','LIVEKIT_API_SECRET'],
+  google:  ['GOOGLE_API_KEY'],
+  voicelink: ['VOICELINK_SIP_DOMAIN','VOICELINK_USERNAME','VOICELINK_PASSWORD','OUTBOUND_TRUNK_ID'],
+  twilio:  [],
+  s3:      [],
+  calcom:  [],
+};
+
+// Group → keys to send on save
+const GROUP_KEYS = {
+  livekit: ['LIVEKIT_URL','LIVEKIT_API_KEY','LIVEKIT_API_SECRET'],
+  google:  ['GOOGLE_API_KEY','GEMINI_MODEL','GEMINI_TTS_VOICE'],
+  voicelink: ['VOICELINK_SIP_DOMAIN','VOICELINK_USERNAME','VOICELINK_PASSWORD','VOICELINK_OUTBOUND_NUMBER','VOICELINK_DID_2','VOICELINK_DID_3','VOICELINK_DID_4','OUTBOUND_TRUNK_ID','INBOUND_TRUNK_ID','LIVEKIT_SIP_ENDPOINT','DEFAULT_TRANSFER_NUMBER'],
+  twilio:  ['TWILIO_ACCOUNT_SID','TWILIO_AUTH_TOKEN','TWILIO_FROM_NUMBER'],
+  s3:      ['AWS_ACCESS_KEY_ID','AWS_SECRET_ACCESS_KEY','AWS_BUCKET_NAME','AWS_REGION','S3_ENDPOINT'],
+  calcom:  ['CALCOM_API_KEY','CALCOM_EVENT_TYPE_ID','CALCOM_TIMEZONE'],
+};
+
+// Custom model input toggle
+(function(){
+  const sel = $('s-g-model'), inp = $('s-g-model-custom');
+  if(!sel||!inp) return;
+  sel.addEventListener('change', ()=>{
+    inp.style.display = sel.value==='__custom__' ? 'block' : 'none';
+    if(sel.value==='__custom__') inp.focus();
+  });
+})();
+
+async function loadSettings(){
+  try{
+    const data = await api('/api/settings');
+
+    for(const [key, info] of Object.entries(data)){
+      const fieldId = FIELD_MAP[key];
+      if(!fieldId) continue;
+      const el = $(fieldId);
+      if(!el) continue;
+
+      // Non-sensitive: fill in actual value
+      if(info.value){
+        if(el.tagName==='SELECT'){
+          let matched = false;
+          for(const opt of el.options) if(opt.value===info.value){ opt.selected=true; matched=true; break; }
+          // If value doesn't match any option, show custom input
+          if(!matched && el.id==='s-g-model'){
+            for(const opt of el.options) if(opt.value==='__custom__'){ opt.selected=true; break; }
+            const inp = $('s-g-model-custom');
+            if(inp){ inp.style.display='block'; inp.value=info.value; }
+          }
+        } else {
+          el.value = info.value;
+        }
+      }
+
+      // Configured badge for sensitive keys
+      const badgeId = CFG_BADGES[key];
+      if(badgeId){
+        const badge = $(badgeId);
+        if(badge){
+          if(info.configured){
+            badge.className='configured-badge';
+            badge.innerHTML='<span style="color:var(--accent)">✓</span> Configured';
+          } else {
+            badge.className='not-set-badge';
+            badge.textContent='Not configured';
+          }
+        }
+      }
+    }
+
+    // Update group status badges
+    updateGroupStatuses(data);
+
+  }catch(e){ console.error('loadSettings',e) }
+  await loadToolToggles();
+}
+
+function updateGroupStatuses(data){
+  for(const [group, keys] of Object.entries(GROUP_REQUIRED)){
+    const el = $(`gs-${group}`);
+    if(!el || !keys.length) continue;
+    const allSet = keys.every(k => {
+      const info = data[k];
+      if(!info) return false;
+      return info.configured || bool(info.value);
+    });
+    if(allSet){
+      el.textContent='✓ Configured'; el.className='group-status gs-ok';
+    } else {
+      el.textContent='Not configured'; el.className='group-status gs-warn';
+    }
+  }
+}
+function bool(v){ return v!==undefined && v!==null && v!==''; }
+
+window.createSipTrunk = async function(){
+  const btn = $('btn-create-trunk');
+  const status = $('gss-voicelink');
+  btn.disabled = true;
+  btn.textContent = '⏳ Creating trunk…';
+  status.style.color = 'var(--muted)';
+  status.textContent = 'Registering outbound SIP trunk in LiveKit…';
+  try {
+    const r = await fetch('/api/setup/trunk', {method:'POST'});
+    const d = await r.json();
+    if(!r.ok) throw new Error(d.detail || r.statusText);
+    const inp = $('s-v-trunk');
+    if(inp) inp.value = d.trunk_id;
+    status.style.color = 'var(--accent)';
+    status.textContent = `✓ Outbound trunk created: ${d.trunk_id}`;
+    toast(`Outbound SIP trunk created and saved: ${d.trunk_id}`);
+    await loadSettings();
+  } catch(e) {
+    status.style.color = '#ff4444';
+    status.textContent = `Error: ${e.message}`;
+    toast(e.message, 'err');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '⚡ Create Outbound Trunk';
+  }
+};
+
+window.createInboundTrunk = async function(){
+  const btn = $('btn-create-inbound-trunk');
+  const status = $('gss-voicelink');
+  btn.disabled = true;
+  btn.textContent = '⏳ Creating inbound trunk…';
+  status.style.color = 'var(--muted)';
+  status.textContent = 'Registering inbound SIP trunk in LiveKit…';
+  try {
+    const r = await fetch('/api/setup/inbound-trunk', {method:'POST'});
+    const d = await r.json();
+    if(!r.ok) throw new Error(d.detail || r.statusText);
+    const inp = $('s-v-inbound-trunk');
+    if(inp) inp.value = d.trunk_id;
+    status.style.color = 'var(--accent)';
+    status.textContent = `✓ Inbound trunk created: ${d.trunk_id} (${(d.numbers||[]).join(', ')})`;
+    toast(`Inbound SIP trunk created: ${d.trunk_id}`);
+    await loadSettings();
+  } catch(e) {
+    status.style.color = '#ff4444';
+    status.textContent = `Error: ${e.message}`;
+    toast(e.message, 'err');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '📥 Create Inbound Trunk';
+  }
+};
+
+window.createDispatchRule = async function(){
+  const btn = $('btn-create-dispatch-rule');
+  const status = $('gss-voicelink');
+  btn.disabled = true;
+  btn.textContent = '⏳ Creating dispatch rule…';
+  status.style.color = 'var(--muted)';
+  status.textContent = 'Creating SIP dispatch rule in LiveKit…';
+  try {
+    const r = await fetch('/api/setup/dispatch-rule', {method:'POST'});
+    const d = await r.json();
+    if(!r.ok) throw new Error(d.detail || r.statusText);
+    status.style.color = 'var(--accent)';
+    status.textContent = `✓ Dispatch rule created: ${d.rule_id}`;
+    toast(`SIP dispatch rule created: ${d.rule_id}`);
+    await loadSettings();
+  } catch(e) {
+    status.style.color = '#ff4444';
+    status.textContent = `Error: ${e.message}`;
+    toast(e.message, 'err');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '🔀 Create Dispatch Rule';
+  }
+};
+
+window.saveGroup = async function(group){
+  const keys = GROUP_KEYS[group];
+  const settings = {};
+  for(const key of keys){
+    const fieldId = FIELD_MAP[key];
+    if(!fieldId) continue;
+    const el = $(fieldId);
+    if(!el) continue;
+    let val = el.value.trim();
+    // Custom model: read from text input instead
+    if(el.id==='s-g-model' && val==='__custom__'){
+      const inp = $('s-g-model-custom');
+      val = inp ? inp.value.trim() : '';
+    }
+    if(val) settings[key] = val;
+  }
+  if(!Object.keys(settings).length){
+    setGroupStatus(group, 'No new values to save — fill in at least one field.', 'err');
+    return;
+  }
+  const btn = document.querySelector(`#grp-${group} .btn-green`);
+  if(btn) btn.disabled=true;
+  try{
+    const r = await apiPost('/api/settings', {settings});
+    const d = await r.json();
+    if(!r.ok) throw new Error(d.detail||r.statusText);
+    setGroupStatus(group, `✓ Saved ${d.keys_updated.length} value(s).`, 'ok');
+    toast(`${group} settings saved.`);
+    await loadSettings();  // reload to update badges
+  }catch(e){
+    setGroupStatus(group, e.message, 'err');
+    toast(e.message,'err');
+  }finally{
+    if(btn) btn.disabled=false;
+  }
+};
+
+function setGroupStatus(group, msg, type=''){
+  const el = $(`gss-${group}`);
+  if(el){ el.textContent=msg; el.className=`group-save-status ${type}`; }
+  setTimeout(()=>{ if(el) el.textContent='' }, 6000);
+}
+
+// ══════════════════════════════════════════════════════
+// Live Logs
+// ══════════════════════════════════════════════════════
+
+function esc(str){ return (str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;') }
+
+// Active filter state
+const logsFilter = { level: 'all', source: 'all' };
+let logsAutoRefresh = true;
+let logsRefreshTimer = null;
+let logsAllRows = [];   // raw data, unfiltered
+
+// Wire up level filter buttons
+document.querySelectorAll('#log-level-filters .filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    logsFilter.level = btn.dataset.level;
+    document.querySelectorAll('#log-level-filters .filter-btn').forEach(b => {
+      b.className = 'filter-btn';
+    });
+    btn.className = `filter-btn active-${logsFilter.level==='all'?'all':logsFilter.level}`;
+    renderLogs();
+  });
+});
+
+// Wire up source filter buttons
+document.querySelectorAll('#log-source-filters .filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    logsFilter.source = btn.dataset.source;
+    document.querySelectorAll('#log-source-filters .filter-btn').forEach(b => {
+      b.className = 'filter-btn';
+    });
+    btn.className = `filter-btn active-${logsFilter.source==='all'?'all':'all'}`;
+    // source active style uses generic active-all tint; differentiate via border color
+    if(logsFilter.source!=='all'){
+      btn.style.borderColor='var(--accent2)';
+      btn.style.color='var(--accent2)';
+      btn.style.background='#00ccff10';
+    }
+    renderLogs();
+  });
+});
+
+// Pause / Resume toggle
+$('logs-pause-btn').addEventListener('click', () => {
+  logsAutoRefresh = !logsAutoRefresh;
+  const btn = $('logs-pause-btn');
+  const dot = $('logs-refresh-dot');
+  const status = $('logs-refresh-status');
+  const label = $('logs-refresh-label');
+  if(logsAutoRefresh){
+    btn.textContent = '⏸ Pause';
+    dot.classList.remove('paused');
+    status.textContent = 'Live';
+    label.textContent = '● auto-refresh 5s';
+    scheduleLogsRefresh();
+  } else {
+    btn.textContent = '▶ Resume';
+    dot.classList.add('paused');
+    status.textContent = 'Paused';
+    label.textContent = '○ paused';
+    clearTimeout(logsRefreshTimer);
+  }
+});
+
+function scheduleLogsRefresh(){
+  clearTimeout(logsRefreshTimer);
+  if(logsAutoRefresh){
+    logsRefreshTimer = setTimeout(async () => {
+      await loadLogs();
+      scheduleLogsRefresh();
+    }, 5000);
+  }
+}
+
+async function loadLogs(){
+  const tbody = $('errors-tbody');
+  try{
+    // Build query params from current filters
+    const params = new URLSearchParams({ limit: 200 });
+    if(logsFilter.level !== 'all')  params.set('level',  logsFilter.level);
+    if(logsFilter.source !== 'all') params.set('source', logsFilter.source);
+
+    let d;
+    try{
+      d = await api(`/api/logs?${params}`);
+    } catch(_) {
+      // Fallback to /api/errors if /api/logs doesn't exist yet
+      d = await api('/api/errors?limit=200');
+    }
+
+    logsAllRows = d.data || [];
+
+    // Update error dot — only show for error-level entries
+    const hasErrors = logsAllRows.some(r => (r.level||'error') === 'error');
+    $('err-dot').classList.toggle('show', hasErrors);
+
+    renderLogs();
+  } catch(e) {
+    tbody.innerHTML = '<tr><td colspan="5" class="empty">Failed to load logs.</td></tr>';
+  }
+}
+
+// Alias so existing callers (switchTab, init) still work
+function loadErrors(){ return loadLogs(); }
+
+function renderLogs(){
+  const tbody = $('errors-tbody');
+
+  // Client-side filter (in case server didn't filter)
+  const rows = logsAllRows.filter(r => {
+    const lv = (r.level||'error').toLowerCase();
+    const src = (r.source||'').toLowerCase();
+    if(logsFilter.level  !== 'all' && lv  !== logsFilter.level)  return false;
+    if(logsFilter.source !== 'all' && src !== logsFilter.source) return false;
+    return true;
+  });
+
+  $('logs-count').textContent = rows.length;
+
+  if(!rows.length){
+    tbody.innerHTML = '<tr><td colspan="5" class="empty">No log entries match the current filter.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = rows.map((r, i) => {
+    const lv    = (r.level||'error').toLowerCase();
+    const src   = r.source || '?';
+    const msg   = esc(r.message || '—');
+    const det   = r.detail || '';
+    const detShort = det.length > 80 ? esc(det.slice(0, 80)) + '…' : esc(det) || '—';
+    const detFull  = esc(det);
+
+    // Level badge styling
+    const lvBadge = lv === 'error'
+      ? `<span class="badge b-error">${lv}</span>`
+      : lv === 'warning'
+        ? `<span class="badge b-warning">${lv}</span>`
+        : `<span class="badge b-info">${lv}</span>`;
+
+    const srcBadge = `<span class="badge" style="background:#33333318;color:#aaa;border:1px solid #333">${esc(src)}</span>`;
+
+    return `<tr class="log-row lv-${lv}" onclick="toggleLogDetail(${i})">
+      <td style="white-space:nowrap;font-size:.72rem">${fmtTs(r.timestamp)}</td>
+      <td>${lvBadge}</td>
+      <td>${srcBadge}</td>
+      <td class="trunc" title="${msg}" style="max-width:280px">${msg}</td>
+      <td style="font-size:.72rem;color:var(--muted)">${detShort}</td>
+    </tr>
+    <tr class="detail-row" id="logdet-${i}">
+      <td colspan="5">${detFull || '<span style="color:var(--muted)">No detail.</span>'}</td>
+    </tr>`;
+  }).join('');
+}
+
+window.toggleLogDetail = function(i){
+  const row = document.getElementById(`logdet-${i}`);
+  if(!row) return;
+  row.classList.toggle('open');
+};
+
+$('clear-errors-btn').addEventListener('click', async () => {
+  if(!confirm('Clear all logs?')) return;
+  try{
+    // Try /api/logs DELETE first, fall back to /api/errors
+    let r;
+    try { r = await apiDel('/api/logs'); }
+    catch(_) { r = await apiDel('/api/errors'); }
+
+    toast('Logs cleared.');
+    $('err-dot').classList.remove('show');
+    logsAllRows = [];
+    $('logs-count').textContent = '0';
+    $('errors-tbody').innerHTML = '<tr><td colspan="5" class="empty">No logs yet.</td></tr>';
+  } catch(e) { toast(e.message, 'err'); }
+});
+
+// ══════════════════════════════════════════════════════
+// CRM
+// ══════════════════════════════════════════════════════
+
+async function loadCRM(){
+  const tbody=$('crm-tbody');
+  try{
+    const d=await api('/api/crm');
+    const rows=d.data||[];
+    if(!rows.length){tbody.innerHTML='<tr><td colspan="7" class="empty">No contacts yet. Make some calls first.</td></tr>';return}
+    tbody.innerHTML=rows.map(c=>`<tr>
+      <td style="font-family:var(--mono)">${c.phone_number}</td>
+      <td>${c.lead_name||'—'}</td>
+      <td style="text-align:center">${c.total_calls}</td>
+      <td style="text-align:center">${c.booked?`<span style="color:var(--accent);font-weight:700">${c.booked}</span>`:'0'}</td>
+      <td style="font-size:.72rem">${fmtTs(c.last_call)}</td>
+      <td>${badge(c.last_outcome)}</td>
+      <td><button class="btn btn-ghost" style="font-size:.72rem;padding:.25rem .6rem" onclick="openCRMDetail('${esc(c.phone_number)}','${esc(c.lead_name||'')}')">View History</button></td>
+    </tr>`).join('');
+  }catch(e){tbody.innerHTML='<tr><td colspan="7" class="empty">Failed to load contacts.</td></tr>'}
+}
+
+window.openCRMDetail = async function(phone, name){
+  $('crm-detail-phone').textContent=phone;
+  $('crm-detail-name').textContent=name||'Unknown';
+  $('crm-detail').style.display='block';
+  $('crm-detail').scrollIntoView({behavior:'smooth',block:'start'});
+  const tbody=$('crm-calls-tbody');
+  tbody.innerHTML='<tr><td colspan="6" class="empty">Loading...</td></tr>';
+  try{
+    const d=await api('/api/crm/calls?phone='+encodeURIComponent(phone));
+    const calls=d.data||[];
+    if(!calls.length){tbody.innerHTML='<tr><td colspan="6" class="empty">No calls found.</td></tr>';return}
+    tbody.innerHTML=calls.map(c=>`<tr>
+      <td style="font-size:.72rem;white-space:nowrap">${fmtTs(c.timestamp)}</td>
+      <td>${badge(c.outcome)}</td>
+      <td>${c.duration_seconds!=null?c.duration_seconds+'s':'—'}</td>
+      <td class="trunc" style="max-width:160px" title="${esc(c.reason||'')}">${esc(c.reason)||'—'}</td>
+      <td style="min-width:180px">
+        <div style="display:flex;gap:.4rem;align-items:center">
+          <input type="text" id="note-${c.id}" value="${esc(c.notes||'')}" placeholder="Add note…"
+            style="flex:1;padding:.25rem .5rem;font-size:.75rem;background:#111;border:1px solid var(--border);color:var(--text);border-radius:4px;font-family:var(--sans)" />
+          <button class="btn btn-ghost" style="font-size:.68rem;padding:.2rem .5rem;white-space:nowrap"
+            onclick="saveNote('${c.id}')">Save</button>
+        </div>
+      </td>
+      <td>${c.recording_url
+        ?`<a href="${esc(c.recording_url)}" target="_blank" style="color:var(--accent2);font-size:.75rem;text-decoration:none">▶ Play</a>`
+        :'<span style="color:var(--muted);font-size:.72rem">—</span>'}</td>
+    </tr>`).join('');
+  }catch(e){tbody.innerHTML='<tr><td colspan="6" class="empty">Failed to load.</td></tr>'}
+};
+
+window.closeCRMDetail = function(){
+  $('crm-detail').style.display='none';
+};
+
+window.saveNote = async function(callId){
+  const inp=document.getElementById('note-'+callId);
+  if(!inp) return;
+  const notes=inp.value.trim();
+  try{
+    const r=await fetch(`/api/calls/${callId}/notes`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({notes})});
+    if(!r.ok) throw new Error((await r.json()).detail||r.statusText);
+    toast('Note saved.');
+  }catch(e){toast(e.message,'err')}
+};
+
+// ══════════════════════════════════════════════════════
+// Campaigns
+// ══════════════════════════════════════════════════════
+let campContacts = [];
+
+window.toggleCampForm = function(){
+  const f=$('camp-form'), t=$('camp-form-toggle');
+  const open = f.style.display==='block';
+  f.style.display = open?'none':'block';
+  t.textContent = open?'▼ expand':'▲ collapse';
+};
+
+window.onCampScheduleChange = function(){
+  const v=$('camp-schedule').value;
+  $('camp-time-wrap').style.display = v==='once'?'none':'block';
+};
+
+window.parseCampCSV = async function(){
+  const file=$('bc-file')||$('camp-file'); // reuse camp-file
+  const campFile=$('camp-file').files[0];
+  if(!campFile){showErr('camp-err','Select a CSV file first.');return}
+  const lines=(await campFile.text()).trim().split('\n').filter(l=>l.trim());
+  if(lines.length<2){showErr('camp-err','CSV needs header + at least 1 data row.');return}
+  const hdrs=lines[0].split(',').map(h=>h.trim().toLowerCase().replace(/"/g,''));
+  const c=k=>hdrs.indexOf(k);
+  const pc=c('phone'),lc=c('lead_name'),bc=c('business_name'),sc=c('service_type');
+  if(pc===-1){showErr('camp-err','"phone" column not found.');return}
+  campContacts=lines.slice(1).map(line=>{
+    const cols=line.split(',').map(x=>x.trim().replace(/^"|"$/g,''));
+    return{phone:cols[pc]||'',lead_name:lc!==-1?cols[lc]:'there',
+      business_name:bc!==-1?cols[bc]:'our company',service_type:sc!==-1?cols[sc]:'our service'}
+  }).filter(r=>r.phone.startsWith('+'));
+  if(!campContacts.length){showErr('camp-err','No valid rows (phone must start with "+").');return}
+  $('camp-count').textContent=campContacts.length;
+  $('camp-preview-tbody').innerHTML=campContacts.slice(0,5).map((r,i)=>
+    `<tr><td>${i+1}</td><td>${r.phone}</td><td>${r.lead_name}</td><td>${r.business_name}</td></tr>`
+  ).join('')+(campContacts.length>5?`<tr><td colspan="4" class="empty">…and ${campContacts.length-5} more</td></tr>`:'');
+  $('camp-preview').style.display='block';
+  $('camp-create-btn').disabled=false;
+  toast(`${campContacts.length} contacts loaded.`);
+};
+
+window.createCampaign = async function(){
+  const name=$('camp-name').value.trim();
+  if(!name){showErr('camp-err','Campaign name is required.');return}
+  if(!campContacts.length){showErr('camp-err','Parse a CSV file first.');return}
+  const schedType=$('camp-schedule').value;
+  const schedTime=$('camp-time').value.trim()||'09:00';
+  const delay=Math.max(1,parseInt($('camp-delay').value)||3);
+  const usePrompt=$('camp-prompt-chk').checked;
+  const prompt=usePrompt?$('camp-prompt').value.trim()||null:null;
+  const btn=$('camp-create-btn');
+  btn.disabled=true; btn.textContent='Creating...';
+  try{
+    const r=await apiPost('/api/campaigns',{
+      name,contacts:campContacts,schedule_type:schedType,
+      schedule_time:schedTime,call_delay_seconds:delay,system_prompt:prompt,
+      agent_profile_id:$('camp-agent-profile').value||null
+    });
+    const d=await r.json();
+    if(!r.ok) throw new Error(d.detail||r.statusText);
+    const msg=schedType==='once'
+      ?`Campaign "${name}" created — dispatching ${campContacts.length} calls now!`
+      :`Campaign "${name}" scheduled (${schedType} at ${schedTime})`;
+    toast(msg);
+    resetCampForm();
+    loadCampaigns();
+  }catch(e){showErr('camp-err',e.message);toast(e.message,'err')}
+  finally{btn.disabled=false;btn.textContent='🚀 Create Campaign'}
+};
+
+window.resetCampForm = function(){
+  $('camp-name').value='';
+  $('camp-schedule').value='once';
+  $('camp-time-wrap').style.display='none';
+  $('camp-file').value='';
+  campContacts=[];
+  $('camp-preview').style.display='none';
+  $('camp-create-btn').disabled=true;
+  $('camp-prompt-chk').checked=false;
+  $('camp-prompt-area').style.display='none';
+  $('camp-prompt').value='';
+};
+
+async function loadCampaigns(){
+  const tbody=$('camp-tbody');
+  try{
+    const d=await api('/api/campaigns');
+    const rows=d.data||[];
+    if(!rows.length){tbody.innerHTML='<tr><td colspan="8" class="empty">No campaigns yet.</td></tr>';return}
+    tbody.innerHTML=rows.map(c=>{
+      const contacts=JSON.parse(c.contacts_json||'[]');
+      const sched=c.schedule_type==='once'?'Once'
+        :c.schedule_type==='daily'?`Daily ${c.schedule_time}`
+        :`Weekdays ${c.schedule_time}`;
+      const statusBadge=c.status==='active'?`<span class="badge b-booked">active</span>`
+        :c.status==='paused'?`<span class="badge b-voicemail">paused</span>`
+        :c.status==='completed'?`<span class="badge b-callback_requested">done</span>`
+        :`<span class="badge b-wrong_number">${c.status}</span>`;
+      const canToggle=c.schedule_type!=='once';
+      const toggleBtn=canToggle
+        ?(c.status==='paused'
+          ?`<button class="btn btn-ghost" style="font-size:.7rem;padding:.2rem .5rem" onclick="toggleCampaign('${c.id}','active')">▶ Resume</button>`
+          :`<button class="btn btn-ghost" style="font-size:.7rem;padding:.2rem .5rem" onclick="toggleCampaign('${c.id}','paused')">⏸ Pause</button>`)
+        :'';
+      return `<tr>
+        <td style="font-weight:600">${esc(c.name)}</td>
+        <td style="font-size:.75rem">${sched}</td>
+        <td style="text-align:center">${contacts.length}</td>
+        <td style="text-align:center;color:var(--accent)">${c.total_dispatched||0}</td>
+        <td style="text-align:center;color:var(--danger)">${c.total_failed||0}</td>
+        <td style="font-size:.72rem">${fmtTs(c.last_run_at)}</td>
+        <td>${statusBadge}</td>
+        <td style="display:flex;gap:.3rem;flex-wrap:wrap">
+          <button class="btn btn-green" style="font-size:.7rem;padding:.2rem .5rem" onclick="runCampaign('${c.id}','${esc(c.name)}')">▶ Run Now</button>
+          ${toggleBtn}
+          <button class="btn btn-red" onclick="deleteCampaign('${c.id}','${esc(c.name)}')">🗑</button>
+        </td>
+      </tr>`;
+    }).join('');
+  }catch(e){tbody.innerHTML='<tr><td colspan="8" class="empty">Failed to load.</td></tr>'}
+}
+
+window.runCampaign = async function(id, name){
+  if(!confirm(`Run campaign "${name}" now?`)) return;
+  try{
+    const r=await apiPost(`/api/campaigns/${id}/run`,{});
+    const d=await r.json(); if(!r.ok) throw new Error(d.detail);
+    toast(`Campaign "${name}" dispatching ${d.contacts} calls…`);
+    setTimeout(loadCampaigns,2000);
+  }catch(e){toast(e.message,'err')}
+};
+
+window.toggleCampaign = async function(id, newStatus){
+  try{
+    const r=await fetch(`/api/campaigns/${id}/status`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:newStatus})});
+    const d=await r.json(); if(!r.ok) throw new Error(d.detail);
+    toast(`Campaign ${newStatus==='active'?'resumed':'paused'}.`);
+    loadCampaigns();
+  }catch(e){toast(e.message,'err')}
+};
+
+window.deleteCampaign = async function(id, name){
+  if(!confirm(`Delete campaign "${name}"? This cannot be undone.`)) return;
+  try{
+    const r=await apiDel(`/api/campaigns/${id}`); if(!r.ok){const d=await r.json();throw new Error(d.detail)}
+    toast(`Campaign "${name}" deleted.`);
+    loadCampaigns();
+  }catch(e){toast(e.message,'err')}
+};
+
+// ══════════════════════════════════════════════════════
+// Agent Profiles
+// ══════════════════════════════════════════════════════
+let _agentEditId = null;
+
+async function loadAgentProfiles(){
+  try{
+    const raw = await api('/api/agent-profiles');
+    // Guard: server may return {detail:"..."} if table doesn't exist yet
+    const profiles = Array.isArray(raw) ? raw : [];
+    if(!Array.isArray(raw) && raw && raw.detail){
+      console.warn('Agent profiles API error:', raw.detail);
+    }
+    const tbody = $('agents-tbody');
+    if(!profiles.length){
+      tbody.innerHTML='<tr><td colspan="6" class="empty">No agent profiles yet — create one above.</td></tr>';
+    } else {
+      tbody.innerHTML = profiles.map(p=>`
+        <tr>
+          <td><strong>${esc(p.name)}</strong></td>
+          <td>${esc(p.voice)}</td>
+          <td><code style="font-size:.72rem">${esc(p.model)}</code></td>
+          <td style="font-size:.72rem;color:var(--muted)">${p.enabled_tools&&p.enabled_tools!=='[]'?esc(p.enabled_tools):'all'}</td>
+          <td>${p.is_default?'<span style="color:var(--accent);font-weight:700">★ default</span>':''}</td>
+          <td style="display:flex;gap:.4rem;flex-wrap:wrap">
+            <button class="btn btn-ghost" style="font-size:.72rem;padding:.25rem .6rem" onclick="editAgentProfile('${p.id}')">✏️ Edit</button>
+            <button class="btn btn-ghost" style="font-size:.72rem;padding:.25rem .6rem" onclick="setDefaultAgentProfile('${p.id}','${esc(p.name)}')">★ Default</button>
+            <button class="btn btn-red" onclick="deleteAgentProfile('${p.id}','${esc(p.name)}')">🗑</button>
+          </td>
+        </tr>`).join('');
+    }
+    // Also populate dropdowns in Single Call + Campaigns tabs
+    _populateProfileDropdowns(profiles);
+  }catch(e){ toast('Failed to load agent profiles: '+e.message,'err') }
+}
+
+function _populateProfileDropdowns(profiles){
+  ['f-agent-profile','bc-agent-profile','camp-agent-profile'].forEach(id=>{
+    const sel=document.getElementById(id);
+    if(!sel) return;
+    const cur=sel.value;
+    sel.innerHTML='<option value="">— Use Global Default —</option>'+
+      profiles.map(p=>`<option value="${p.id}"${p.is_default?' (default)':''}>${esc(p.name)} — ${esc(p.voice)}</option>`).join('');
+    if(cur) sel.value=cur;
+  });
+}
+
+window.saveAgentProfile = async function(){
+  const name=$('agent-name').value.trim();
+  if(!name){showErr('agent-form-err','Profile name is required.');return}
+  const payload={
+    name,
+    voice:$('agent-voice').value,
+    model:$('agent-model').value,
+    system_prompt:$('agent-prompt').value.trim()||null,
+    enabled_tools:$('agent-tools').value.trim()||'[]',
+    is_default:$('agent-is-default').checked
+  };
+  const btn=$('agent-save-btn');
+  btn.disabled=true; btn.textContent='Saving...';
+  try{
+    let r;
+    if(_agentEditId){
+      r=await fetch(`/api/agent-profiles/${_agentEditId}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    } else {
+      r=await apiPost('/api/agent-profiles',payload);
+    }
+    const d=await r.json(); if(!r.ok) throw new Error(d.detail||r.statusText);
+    toast(_agentEditId?'Agent profile updated!':'Agent profile created!');
+    resetAgentForm();
+    loadAgentProfiles();
+  }catch(e){showErr('agent-form-err',e.message);toast(e.message,'err')}
+  finally{btn.disabled=false;btn.textContent='💾 Save Profile'}
+};
+
+window.editAgentProfile = async function(id){
+  try{
+    const p=await api(`/api/agent-profiles/${id}`);
+    _agentEditId=id;
+    $('agent-edit-id').value=id;
+    $('agent-name').value=p.name||'';
+    $('agent-voice').value=p.voice||'Aoede';
+    $('agent-model').value=p.model||'gemini-3.1-flash-live-preview';
+    $('agent-tools').value=p.enabled_tools&&p.enabled_tools!=='[]'?p.enabled_tools:'';
+    $('agent-prompt').value=p.system_prompt||'';
+    $('agent-is-default').checked=!!p.is_default;
+    $('agent-form-title').textContent='✏️ Edit: '+p.name;
+    $('agent-form-cancel').style.display='';
+    $('agent-save-btn').textContent='💾 Update Profile';
+    $('agent-form-card').scrollIntoView({behavior:'smooth',block:'start'});
+  }catch(e){toast('Failed to load profile: '+e.message,'err')}
+};
+
+window.deleteAgentProfile = async function(id,name){
+  if(!confirm(`Delete agent profile "${name}"? This cannot be undone.`)) return;
+  try{
+    const r=await apiDel(`/api/agent-profiles/${id}`);
+    if(!r.ok){const d=await r.json();throw new Error(d.detail)}
+    toast(`Profile "${name}" deleted.`);
+    loadAgentProfiles();
+  }catch(e){toast(e.message,'err')}
+};
+
+window.setDefaultAgentProfile = async function(id,name){
+  try{
+    const r=await apiPost(`/api/agent-profiles/${id}/set-default`,{});
+    if(!r.ok){const d=await r.json();throw new Error(d.detail)}
+    toast(`"${name}" is now the default agent.`);
+    loadAgentProfiles();
+  }catch(e){toast(e.message,'err')}
+};
+
+window.resetAgentForm = function(){
+  _agentEditId=null;
+  $('agent-edit-id').value='';
+  $('agent-name').value='';
+  $('agent-voice').value='Aoede';
+  $('agent-model').value='gemini-3.1-flash-live-preview';
+  $('agent-tools').value='';
+  $('agent-prompt').value='';
+  $('agent-is-default').checked=false;
+  $('agent-form-title').textContent='➕ New Agent Profile';
+  $('agent-form-cancel').style.display='none';
+  $('agent-save-btn').textContent='💾 Save Profile';
+  const err=$('agent-form-err'); if(err) err.textContent='';
+};
+
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+
+// ══════════════════════════════════════════════════════
+// Tool Toggles
+// ══════════════════════════════════════════════════════
+const ALL_TOOLS=['check_availability','book_appointment','end_call','transfer_to_human',
+  'send_sms_confirmation','lookup_contact','remember_details','book_calcom','cancel_calcom'];
+
+async function loadToolToggles(){
+  try{
+    const d=await api('/api/settings');
+    const info=d['ENABLED_TOOLS'];
+    if(info&&info.value){
+      const enabled=JSON.parse(info.value||'[]');
+      ALL_TOOLS.forEach(t=>{
+        const el=document.getElementById('tool-'+t);
+        if(el) el.checked=enabled.includes(t);
+      });
+    }
+    // else keep all checked (default)
+  }catch(e){}
+}
+
+window.saveToolToggles = async function(){
+  const enabled=ALL_TOOLS.filter(t=>{const el=document.getElementById('tool-'+t);return el&&el.checked});
+  try{
+    const r=await apiPost('/api/settings',{settings:{ENABLED_TOOLS:JSON.stringify(enabled)}});
+    const d=await r.json(); if(!r.ok) throw new Error(d.detail);
+    setGroupStatus('tools',`✓ Saved — ${enabled.length} tools enabled.`,'ok');
+    toast('Tool settings saved.');
+  }catch(e){setGroupStatus('tools',e.message,'err');toast(e.message,'err')}
+};
+
+// ══════════════════════════════════════════════════════
+// Init
+// ══════════════════════════════════════════════════════
+async function loadDoctor(){
+  try {
+    const r = await fetch('/api/auth/me');
+    if(!r.ok){ window.location.href = '/login'; return; }
+    const d = await r.json();
+    const chip = document.getElementById('doctor-chip');
+    if(chip) chip.textContent = d.name ? `Dr. ${d.name.replace(/^Dr\.?\s*/i,'')}` : d.email;
+  } catch(e){ window.location.href = '/login'; }
+}
+async function doLogout(){
+  try { await fetch('/api/auth/logout', {method:'POST'}); } catch(e){}
+  window.location.href = '/login';
+}
+
+function init(){
+  loadDoctor();
+  loadStats();
+  loadCalls();
+  loadAppointments();
+  loadLogs();
+  loadAgentProfiles();  // populates dropdowns on all tabs
+  setInterval(loadStats, 10000);
+  scheduleLogsRefresh();  // 5s auto-refresh, pause/resume controlled by user
+}
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
